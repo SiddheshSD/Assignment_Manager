@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
@@ -22,6 +23,12 @@ const ExperimentsScreen = ({ navigation }) => {
   useEffect(() => {
     loadData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
     const data = await loadExperiments();
@@ -162,7 +169,8 @@ const ExperimentsScreen = ({ navigation }) => {
           <NeumorphicButton
             title="Add Subject"
             onPress={handleAddSubject}
-            style={[styles.button, styles.addButton]}
+            style={[styles.button, styles.cancelButton]}
+            textStyle={styles.cancelButtonText}
           />
         </View>
       </NeumorphicCard>
@@ -210,7 +218,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
   },
   addButton: {
     width: 40,
@@ -221,7 +229,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
+     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -238,12 +246,12 @@ const styles = StyleSheet.create({
   subjectName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
     marginBottom: 5,
   },
   totalText: {
     fontSize: 16,
-    color: '#666',
+    color: '#374151',
   },
   statusContainer: {
     gap: 8,
@@ -253,7 +261,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: '#111827',
   },
   completed: {
     color: '#10b981',
@@ -274,7 +283,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
     marginBottom: 15,
     textAlign: 'center',
   },

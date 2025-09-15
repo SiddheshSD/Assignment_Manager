@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import { saveTestScores, loadTestScores } from '../utils/storage';
@@ -28,6 +29,12 @@ const TestScoresScreen = ({ navigation }) => {
     loadData();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
+
   const loadData = async () => {
     const data = await loadTestScores();
     setTestScores(data);
@@ -36,6 +43,38 @@ const TestScoresScreen = ({ navigation }) => {
   const saveData = async (newTestScores) => {
     await saveTestScores(newTestScores);
     setTestScores(newTestScores);
+  };
+
+  const handleDeleteTest = (testId) => {
+    Alert.alert(
+      'Delete Test',
+      'Are you sure you want to delete this test?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const updated = testScores.filter(t => t.id !== testId);
+            await saveData(updated);
+          },
+        },
+      ]
+    );
+  };
+
+  const calculatePercentage = (obtained, total) => {
+    if (!total || total === 0) return '0.0';
+    return ((obtained / total) * 100).toFixed(1);
+  };
+
+  const getGradeColor = (percentage) => {
+    const p = typeof percentage === 'number' ? percentage : parseFloat(percentage);
+    if (p >= 90) return '#10b981';
+    if (p >= 80) return '#3b82f6';
+    if (p >= 70) return '#f59e0b';
+    if (p >= 60) return '#f97316';
+    return '#ef4444';
   };
 
   const handleAddTest = () => {
@@ -62,25 +101,66 @@ const TestScoresScreen = ({ navigation }) => {
   };
 
   const renderTestCard = ({ item }) => {
+    const totalObtained = item.subjects.reduce((sum, s) => sum + (s.marksObtained || 0), 0);
+    const totalMarks = item.subjects.reduce((sum, s) => sum + (s.totalMarks || 0), 0);
+    const overallPercentage = calculatePercentage(totalObtained, totalMarks);
+    const overallColor = getGradeColor(overallPercentage);
+
     return (
       <NeumorphicCard
         onPress={() => navigation.navigate('TestScoreDetail', { testScore: item })}
         style={styles.card}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.testType}>{item.testType}</Text>
-          <Text style={styles.yearSemester}>
-            {item.year} SEM {item.semester}
-          </Text>
+          <View style={styles.headerLeftColumn}>
+            <Text style={styles.testType}>{item.testType}</Text>
+            <Text style={styles.yearSemester}>
+              {item.year} SEM {item.semester}
+            </Text>
+          </View>
+          {item.subjects.length === 0 && (
+            <TouchableOpacity
+              onPress={() => handleDeleteTest(item.id)}
+              style={styles.deleteIconButton}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            </TouchableOpacity>
+          )}
         </View>
-        
+
+        {item.subjects.length > 0 ? (
+          <View style={styles.overallRowContainer}>
+            <View style={styles.overallHeaderRow}>
+              <Text style={styles.overallHeaderText}>Total obtained</Text>
+              <Text style={styles.overallHeaderText}>Total marks</Text>
+              <Text style={styles.overallHeaderText}>Overall %</Text>
+            </View>
+            <View style={styles.overallValuesRow}>
+              <Text style={styles.overallValueText}>{totalObtained}</Text>
+              <Text style={styles.overallValueText}>{totalMarks}</Text>
+              <Text style={[styles.overallValueText, { color: overallColor }]}>
+                {overallPercentage}%
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.subjectsContainer}>
           {item.subjects.length > 0 ? (
-            item.subjects.map((subject, index) => (
-              <Text key={index} style={styles.subjectText}>
-                {subject.name}: {subject.marksObtained}/{subject.totalMarks}
-              </Text>
-            ))
+            item.subjects.map((subject, index) => {
+              const pct = calculatePercentage(subject.marksObtained, subject.totalMarks);
+              const pctColor = getGradeColor(pct);
+              return (
+                <View key={index} style={styles.subjectRow}>
+                  <Text style={styles.subjectText}>
+                    {subject.name}: {subject.marksObtained}/{subject.totalMarks}
+                  </Text>
+                  <Text style={[styles.subjectPctText, { color: pctColor }]}>
+                    {pct}%
+                  </Text>
+                </View>
+              );
+            })
           ) : (
             <Text style={styles.noSubjectsText}>No subjects added yet</Text>
           )}
@@ -235,7 +315,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
   },
   addButton: {
     width: 40,
@@ -259,29 +339,89 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     marginBottom: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeftColumn: {
+    flexDirection: 'column',
+  },
+  headerRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteIconButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   testType: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
     marginBottom: 5,
   },
   yearSemester: {
     fontSize: 16,
-    color: '#666',
+    color: '#374151',
   },
   subjectsContainer: {
-    gap: 5,
+    gap: 8,
+  },
+  subjectRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   subjectText: {
     fontSize: 14,
-    color: '#555',
-    fontWeight: '500',
+    color: '#111827',
+    fontWeight: '600',
+  },
+  subjectPctText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   noSubjectsText: {
     fontSize: 14,
-    color: '#999',
+    color: '#6b7280',
     fontStyle: 'italic',
+  },
+  overallRowContainer: {
+    marginBottom: 8,
+  },
+  overallHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  overallHeaderText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+  },
+  overallValuesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  overallValueText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
@@ -306,8 +446,8 @@ const styles = StyleSheet.create({
   },
   selectorLabel: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#111827',
     marginBottom: 10,
   },
   optionsContainer: {

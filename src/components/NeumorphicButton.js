@@ -6,7 +6,7 @@ const NeumorphicButton = ({ title, onPress, style, textStyle, disabled = false }
   return (
     <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.container, style]}>
       <LinearGradient
-        colors={disabled ? ['#e0e0e0', '#b0b0b0'] : ['#f0f0f3', '#cacace']}
+        colors={disabled ? ['#d7dbe5', '#c1c8d6'] : ['#eef1f7', '#d9dee8']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -22,11 +22,9 @@ const NeumorphicButton = ({ title, onPress, style, textStyle, disabled = false }
 const styles = StyleSheet.create({
   container: {
     borderRadius: 15,
+    backgroundColor: '#eef1f7',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 4,
-      height: 4,
-    },
+    shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 6,
@@ -40,11 +38,11 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6366f1',
+    fontWeight: '700',
+    color: '#1f2937',
   },
   disabledText: {
-    color: '#999',
+    color: '#6b7280',
   },
 });
 

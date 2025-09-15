@@ -35,6 +35,11 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     await saveTestScores(updatedTestScores);
   };
 
+  const handleSave = async () => {
+    await saveData();
+    navigation.goBack();
+  };
+
   const handleAddSubject = () => {
     if (!subjectName.trim() || !marksObtained.trim() || !totalMarks.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -214,12 +219,20 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
         <Text style={styles.testInfo}>
           {testScore.testType} - {testScore.year} SEM {testScore.semester}
         </Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setShowAddForm(!showAddForm)}
-        >
-          <Ionicons name="add" size={20} color="#6366f1" />
-        </TouchableOpacity>
+        <View style={styles.rightControls}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+          >
+            <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setShowAddForm(!showAddForm)}
+          >
+            <Ionicons name="add" size={20} color="#6366f1" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {overallStats && (
@@ -275,7 +288,7 @@ const styles = StyleSheet.create({
   testInfo: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
   },
   addButton: {
     width: 35,
@@ -290,6 +303,25 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  saveButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: '#f0f0f3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginRight: 10,
+  },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   statsCard: {
     marginHorizontal: 16,
     marginBottom: 10,
@@ -297,7 +329,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -316,7 +348,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
   },
   listContainer: {
     paddingBottom: 20,
@@ -333,8 +365,8 @@ const styles = StyleSheet.create({
   },
   subjectName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#111827',
     flex: 1,
   },
   deleteButton: {
@@ -360,13 +392,13 @@ const styles = StyleSheet.create({
   },
   marksLabel: {
     fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    color: '#374151',
+    fontWeight: '600',
   },
   marksValue: {
     fontSize: 14,
-    color: '#333',
-    fontWeight: '600',
+    color: '#111827',
+    fontWeight: '700',
   },
   addForm: {
     marginHorizontal: 16,

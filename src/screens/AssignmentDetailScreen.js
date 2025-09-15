@@ -33,6 +33,11 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     await saveAssignments(updatedAssignments);
   };
 
+  const handleSave = async () => {
+    await saveData();
+    navigation.goBack();
+  };
+
   const handleStatusChange = (assignmentId, newStatus) => {
     const updatedAssignment = {
       ...assignment,
@@ -83,6 +88,26 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     setNewTotal('');
     setShowEditForm(false);
     saveData();
+  };
+
+  const handleDeleteSubject = () => {
+    Alert.alert(
+      'Delete Subject',
+      `Delete ${assignment.subjectName}? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const allAssignments = await loadAssignments();
+            const updated = allAssignments.filter((item) => item.id !== assignment.id);
+            await saveAssignments(updated);
+            navigation.goBack();
+          },
+        },
+      ]
+    );
   };
 
   const getStatusColor = (status) => {
@@ -214,7 +239,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
           keyboardType="numeric"
           style={styles.input}
         />
-        <View style={styles.buttonContainer}>
+        <View style={styles.buttonRow}>
           <NeumorphicButton
             title="Cancel"
             onPress={() => {
@@ -230,6 +255,19 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             style={[styles.button, styles.updateButton]}
           />
         </View>
+
+        <View style={styles.deleteRow}>
+          <Text style={styles.deleteLabel}>Delete subject</Text>
+          <View style={styles.deleteButtonRow}>
+            <View style={{ flex: 1 }} />
+            <NeumorphicButton
+              title="Delete"
+              onPress={handleDeleteSubject}
+              style={[styles.button, styles.deleteButton]}
+              textStyle={styles.deleteButtonText}
+            />
+          </View>
+        </View>
       </NeumorphicCard>
     );
   };
@@ -238,12 +276,20 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.subjectName}>{assignment.subjectName}</Text>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => setShowEditForm(!showEditForm)}
-        >
-          <Ionicons name="create-outline" size={20} color="#6366f1" />
-        </TouchableOpacity>
+        <View style={styles.rightControls}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+          >
+            <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={() => setShowEditForm(!showEditForm)}
+          >
+            <Ionicons name="create-outline" size={20} color="#6366f1" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {renderEditForm()}
@@ -275,7 +321,7 @@ const styles = StyleSheet.create({
   subjectName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#111827',
   },
   editButton: {
     width: 35,
@@ -289,6 +335,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  saveButton: {
+    width: 35,
+    height: 35,
+    borderRadius: 17.5,
+    backgroundColor: '#f0f0f3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginRight: 10,
+  },
+  rightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   listContainer: {
     paddingBottom: 20,
@@ -305,8 +370,8 @@ const styles = StyleSheet.create({
   },
   assignmentName: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: '#111827',
   },
   statusIndicator: {
     width: 30,
@@ -359,6 +424,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 4,
+  },
   button: {
     flex: 1,
   },
@@ -370,6 +441,29 @@ const styles = StyleSheet.create({
   },
   updateButton: {
     backgroundColor: '#f0f0f3',
+  },
+  deleteButton: {
+    backgroundColor: '#f0f0f3',
+  },
+  deleteButtonText: {
+    color: '#ef4444',
+  },
+  deleteRow: {
+    marginTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  deleteLabel: {
+    fontSize: 18,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  deleteButtonRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
 });
 
