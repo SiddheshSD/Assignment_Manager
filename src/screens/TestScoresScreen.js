@@ -130,6 +130,7 @@ const TestScoresScreen = ({ navigation }) => {
 
         {item.subjects.length > 0 ? (
           <View style={styles.overallRowContainer}>
+            <Text style={styles.overallTitle}>Overall Performance</Text>
             <View style={styles.overallHeaderRow}>
               <Text style={styles.overallHeaderText}>Total obtained</Text>
               <Text style={styles.overallHeaderText}>Total marks</Text>
@@ -399,6 +400,22 @@ const styles = StyleSheet.create({
   },
   overallRowContainer: {
     marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: '#eef1f7',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  overallTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    textAlign: 'center',
+    marginBottom: 6,
   },
   overallHeaderRow: {
     flexDirection: 'row',

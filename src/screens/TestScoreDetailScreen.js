@@ -235,6 +235,8 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
         </View>
       </View>
 
+      {renderAddForm()}
+
       {overallStats && (
         <NeumorphicCard style={styles.statsCard}>
           <Text style={styles.statsTitle}>Overall Performance</Text>
@@ -258,8 +260,6 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
           </View>
         </NeumorphicCard>
       )}
-
-      {renderAddForm()}
 
       <FlatList
         data={testScore.subjects}
