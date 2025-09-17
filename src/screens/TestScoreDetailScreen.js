@@ -12,6 +12,7 @@ import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
 import { saveTestScores, loadTestScores } from '../utils/storage';
+import { ThemeContext } from '../utils/theme';
 
 const TestScoreDetailScreen = ({ route, navigation }) => {
   const { testScore: initialTestScore } = route.params;
@@ -116,9 +117,9 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     return (
       <NeumorphicCard style={styles.subjectCard}>
         <View style={styles.subjectHeader}>
-          <Text style={styles.subjectName}>{item.name}</Text>
+          <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{item.name}</Text>
           <TouchableOpacity
-            style={styles.deleteButton}
+            style={[styles.deleteButton, { backgroundColor: palette.surface }]}
             onPress={() => handleDeleteSubject(item.id)}
           >
             <Ionicons name="trash-outline" size={18} color="#ef4444" />
@@ -127,17 +128,17 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
         
         <View style={styles.marksContainer}>
           <View style={styles.marksRow}>
-            <Text style={styles.marksLabel}>Marks Obtained:</Text>
+            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Marks Obtained:</Text>
             <Text style={[styles.marksValue, { color: gradeColor }]}>
               {item.marksObtained}
             </Text>
           </View>
           <View style={styles.marksRow}>
-            <Text style={styles.marksLabel}>Total Marks:</Text>
-            <Text style={styles.marksValue}>{item.totalMarks}</Text>
+            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Total Marks:</Text>
+            <Text style={[styles.marksValue, { color: palette.textPrimary }]}>{item.totalMarks}</Text>
           </View>
           <View style={styles.marksRow}>
-            <Text style={styles.marksLabel}>Percentage:</Text>
+            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Percentage:</Text>
             <Text style={[styles.marksValue, { color: gradeColor, fontWeight: 'bold' }]}>
               {percentage}%
             </Text>
@@ -152,7 +153,7 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
 
     return (
       <NeumorphicCard style={styles.addForm}>
-        <Text style={styles.formTitle}>Add New Subject</Text>
+        <Text style={[styles.formTitle, { color: palette.textPrimary }]}>Add New Subject</Text>
         <NeumorphicInput
           placeholder="Subject Name"
           value={subjectName}
@@ -213,21 +214,23 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
 
   const overallStats = calculateOverallStats();
 
+  const palette = React.useContext(ThemeContext).palette;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.testInfo}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <View style={[styles.header, { backgroundColor: palette.background }]}>
+        <Text style={[styles.testInfo, { color: palette.textPrimary }] }>
           {testScore.testType} - {testScore.year} SEM {testScore.semester}
         </Text>
         <View style={styles.rightControls}>
           <TouchableOpacity
-            style={styles.saveButton}
+            style={[styles.saveButton, { backgroundColor: palette.surface }]}
             onPress={handleSave}
           >
             <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.addButton}
+            style={[styles.addButton, { backgroundColor: palette.surface }]}
             onPress={() => setShowAddForm(!showAddForm)}
           >
             <Ionicons name="add" size={20} color="#6366f1" />
@@ -239,20 +242,20 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
 
       {overallStats && (
         <NeumorphicCard style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Overall Performance</Text>
+          <Text style={[styles.statsTitle, { color: palette.textPrimary }]}>Overall Performance</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Total Obtained:</Text>
+              <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Total Obtained:</Text>
               <Text style={[styles.statValue, { color: overallStats.gradeColor }]}>
                 {overallStats.totalObtained}
               </Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Total Marks:</Text>
-              <Text style={styles.statValue}>{overallStats.totalMarks}</Text>
+              <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Total Marks:</Text>
+              <Text style={[styles.statValue, { color: palette.textPrimary }]}>{overallStats.totalMarks}</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Overall %:</Text>
+              <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Overall %:</Text>
               <Text style={[styles.statValue, { color: overallStats.gradeColor, fontWeight: 'bold' }]}>
                 {overallStats.overallPercentage}%
               </Text>

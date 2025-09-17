@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ThemeContext } from '../utils/theme';
 
 const NeumorphicCard = ({ children, onPress, style, disabled = false }) => {
+  const { palette, mode } = React.useContext(ThemeContext);
   const CardComponent = onPress ? TouchableOpacity : View;
 
   return (
-    <CardComponent onPress={onPress} disabled={disabled} style={[styles.container, style]}>
+    <CardComponent onPress={onPress} disabled={disabled} style={[styles.container, { backgroundColor: palette.surface }, style]}>
       <LinearGradient
-        colors={['#eef1f7', '#d9dee8']}
+        colors={mode === 'light' ? ['#eef1f7', '#d9dee8'] : ['#1f2937', '#111827']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}

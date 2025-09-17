@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { ThemeContext, lightPalette, darkPalette } from './src/utils/theme';
+import { loadTheme, saveTheme } from './src/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
@@ -12,13 +15,16 @@ import TestScoresScreen from './src/screens/TestScoresScreen';
 import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ExperimentDetailScreen from './src/screens/ExperimentDetailScreen';
 import TestScoreDetailScreen from './src/screens/TestScoreDetailScreen';
+import Header from './src/components/Header';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 function AssignmentsStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ detachPreviousScreen: true, header: ({ navigation, route, options }) => (
+      <Header navigation={navigation} title={options.title || 'Assignments'} showBack={false} />
+    ) }}>
       <Stack.Screen 
         name="AssignmentsList" 
         component={AssignmentsScreen}
@@ -27,7 +33,9 @@ function AssignmentsStack() {
       <Stack.Screen 
         name="AssignmentDetail" 
         component={AssignmentDetailScreen}
-        options={{ title: 'Assignment Details' }}
+        options={{ title: 'Assignment Details', header: ({ navigation, route, options }) => (
+          <Header navigation={navigation} title={options.title || 'Assignment Details'} showBack={true} />
+        ) }}
       />
     </Stack.Navigator>
   );
@@ -35,7 +43,9 @@ function AssignmentsStack() {
 
 function ExperimentsStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ detachPreviousScreen: true, header: ({ navigation, route, options }) => (
+      <Header navigation={navigation} title={options.title || 'Experiments'} showBack={false} />
+    ) }}>
       <Stack.Screen 
         name="ExperimentsList" 
         component={ExperimentsScreen}
@@ -44,7 +54,9 @@ function ExperimentsStack() {
       <Stack.Screen 
         name="ExperimentDetail" 
         component={ExperimentDetailScreen}
-        options={{ title: 'Experiment Details' }}
+        options={{ title: 'Experiment Details', header: ({ navigation, route, options }) => (
+          <Header navigation={navigation} title={options.title || 'Experiment Details'} showBack={true} />
+        ) }}
       />
     </Stack.Navigator>
   );
@@ -52,7 +64,9 @@ function ExperimentsStack() {
 
 function TestScoresStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ detachPreviousScreen: true, header: ({ navigation, route, options }) => (
+      <Header navigation={navigation} title={options.title || 'Test Scores'} showBack={false} />
+    ) }}>
       <Stack.Screen 
         name="TestScoresList" 
         component={TestScoresScreen}
@@ -61,17 +75,38 @@ function TestScoresStack() {
       <Stack.Screen 
         name="TestScoreDetail" 
         component={TestScoreDetailScreen}
-        options={{ title: 'Test Score Details' }}
+        options={{ title: 'Test Score Details', header: ({ navigation, route, options }) => (
+          <Header navigation={navigation} title={options.title || 'Test Score Details'} showBack={true} />
+        ) }}
       />
     </Stack.Navigator>
   );
 }
 
 export default function App() {
+  const [mode, setMode] = useState('light');
+  const palette = mode === 'light' ? lightPalette : darkPalette;
+
+  useEffect(() => {
+    (async () => {
+      const saved = await loadTheme();
+      setMode(saved);
+    })();
+  }, []);
+
+  const contextValue = {
+    mode,
+    palette,
+    setMode: async (m) => { setMode(m); await saveTheme(m); },
+  };
+
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
+    <ThemeContext.Provider value={contextValue}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <StatusBar style={mode === 'light' ? 'dark' : 'light'} />
       <Tab.Navigator
+        detachInactiveScreens
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
@@ -86,16 +121,33 @@ export default function App() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: '#6366f1',
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: palette.accent,
+          tabBarInactiveTintColor: mode === 'light' ? 'gray' : '#94a3b8',
+          tabBarStyle: { backgroundColor: palette.surface },
+          sceneContainerStyle: { backgroundColor: palette.background },
           headerShown: false,
+          unmountOnBlur: true,
         })}
       >
-        <Tab.Screen name="Assignments" component={AssignmentsStack} />
-        <Tab.Screen name="Experiments" component={ExperimentsStack} />
-        <Tab.Screen name="TestScores" component={TestScoresStack} />
+        <Tab.Screen
+          name="Assignments"
+          component={AssignmentsStack}
+          options={{ unmountOnBlur: true }}
+        />
+        <Tab.Screen
+          name="Experiments"
+          component={ExperimentsStack}
+          options={{ unmountOnBlur: true }}
+        />
+        <Tab.Screen
+          name="TestScores"
+          component={TestScoresStack}
+          options={{ unmountOnBlur: true }}
+        />
       </Tab.Navigator>
-    </NavigationContainer>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </ThemeContext.Provider>
   );
 }
 

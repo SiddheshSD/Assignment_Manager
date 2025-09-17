@@ -12,12 +12,15 @@ import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
 import { saveAssignments, loadAssignments } from '../utils/storage';
+import { ThemeContext } from '../utils/theme';
 
 const AssignmentDetailScreen = ({ route, navigation }) => {
   const { assignment: initialAssignment } = route.params;
   const [assignment, setAssignment] = useState(initialAssignment);
   const [showEditForm, setShowEditForm] = useState(false);
   const [newTotal, setNewTotal] = useState('');
+  const [newCourseCode, setNewCourseCode] = useState(assignment.courseCode || '');
+  const palette = React.useContext(ThemeContext).palette;
 
   useEffect(() => {
     navigation.setOptions({
@@ -81,6 +84,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     const updatedAssignment = {
       ...assignment,
       totalAssignments: total,
+      courseCode: newCourseCode.trim(),
       assignments: updatedAssignments,
     };
 
@@ -147,7 +151,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     return (
       <NeumorphicCard style={styles.assignmentCard}>
         <View style={styles.assignmentHeader}>
-          <Text style={styles.assignmentName}>{item.name}</Text>
+          <Text style={[styles.assignmentName, { color: palette.textPrimary }]}>{item.name}</Text>
           <View style={[styles.statusIndicator, { backgroundColor: statusColor }]}>
             <Ionicons name={statusIcon} size={16} color="white" />
           </View>
@@ -158,7 +162,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             style={[
               styles.statusButton,
               item.status === 'completed' && styles.activeButton,
-              { borderColor: '#10b981' }
+              { borderColor: '#10b981', backgroundColor: palette.surface }
             ]}
             onPress={() => handleStatusChange(item.id, 'completed')}
           >
@@ -175,7 +179,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             style={[
               styles.statusButton,
               item.status === 'written' && styles.activeButton,
-              { borderColor: '#f59e0b' }
+              { borderColor: '#f59e0b', backgroundColor: palette.surface }
             ]}
             onPress={() => handleStatusChange(item.id, 'written')}
           >
@@ -192,7 +196,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             style={[
               styles.statusButton,
               item.status === 'not_completed' && styles.activeButton,
-              { borderColor: '#ef4444' }
+              { borderColor: '#ef4444', backgroundColor: palette.surface }
             ]}
             onPress={() => handleStatusChange(item.id, 'not_completed')}
           >
@@ -209,7 +213,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             style={[
               styles.statusButton,
               item.status === 'not_given' && styles.activeButton,
-              { borderColor: '#6b7280' }
+              { borderColor: '#6b7280', backgroundColor: palette.surface }
             ]}
             onPress={() => handleStatusChange(item.id, 'not_given')}
           >
@@ -231,12 +235,18 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
 
     return (
       <NeumorphicCard style={styles.editForm}>
-        <Text style={styles.formTitle}>Edit Total Assignments</Text>
+        <Text style={[styles.formTitle, { color: palette.textPrimary }]}>Edit Total Assignments</Text>
         <NeumorphicInput
           placeholder="New total number"
           value={newTotal}
           onChangeText={setNewTotal}
           keyboardType="numeric"
+          style={styles.input}
+        />
+        <NeumorphicInput
+          placeholder="Course Code (optional)"
+          value={newCourseCode}
+          onChangeText={setNewCourseCode}
           style={styles.input}
         />
         <View style={styles.buttonRow}>
@@ -257,7 +267,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.deleteRow}>
-          <Text style={styles.deleteLabel}>Delete subject</Text>
+          <Text style={[styles.deleteLabel, { color: palette.textPrimary }]}>Delete subject</Text>
           <View style={styles.deleteButtonRow}>
             <View style={{ flex: 1 }} />
             <NeumorphicButton
@@ -273,18 +283,18 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.subjectName}>{assignment.subjectName}</Text>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <View style={[styles.header, { backgroundColor: palette.background }]}>
+        <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{assignment.subjectName}</Text>
         <View style={styles.rightControls}>
           <TouchableOpacity
-            style={styles.saveButton}
+            style={[styles.saveButton, { backgroundColor: palette.surface }]}
             onPress={handleSave}
           >
             <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.editButton}
+            style={[styles.editButton, { backgroundColor: palette.surface }]}
             onPress={() => setShowEditForm(!showEditForm)}
           >
             <Ionicons name="create-outline" size={20} color="#6366f1" />

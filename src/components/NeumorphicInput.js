@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ThemeContext } from '../utils/theme';
 
 const NeumorphicInput = ({ placeholder, value, onChangeText, style, multiline = false, keyboardType = 'default' }) => {
+  const { palette, mode } = React.useContext(ThemeContext);
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, { backgroundColor: palette.surface }, style]}>
       <LinearGradient
-        colors={['#eef1f7', '#d9dee8']}
+        colors={mode === 'light' ? ['#eef1f7', '#d9dee8'] : ['#1f2937', '#111827']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
@@ -18,7 +20,8 @@ const NeumorphicInput = ({ placeholder, value, onChangeText, style, multiline = 
           onChangeText={onChangeText}
           multiline={multiline}
           keyboardType={keyboardType}
-          placeholderTextColor="#6b7280"
+          placeholderTextColor={mode === 'light' ? '#6b7280' : '#9ca3af'}
+          color={palette.textPrimary}
         />
       </LinearGradient>
     </View>

@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import NeumorphicCard from '../components/NeumorphicCard';
+import { ThemeContext } from '../utils/theme';
 import NeumorphicButton from '../components/NeumorphicButton';
 import { saveTestScores, loadTestScores } from '../utils/storage';
 
@@ -113,15 +114,15 @@ const TestScoresScreen = ({ navigation }) => {
       >
         <View style={styles.cardHeader}>
           <View style={styles.headerLeftColumn}>
-            <Text style={styles.testType}>{item.testType}</Text>
-            <Text style={styles.yearSemester}>
+            <Text style={[styles.testType, { color: palette.textPrimary }]}>{item.testType}</Text>
+            <Text style={[styles.yearSemester, { color: palette.textSecondary }]}>
               {item.year} SEM {item.semester}
             </Text>
           </View>
           {item.subjects.length === 0 && (
             <TouchableOpacity
               onPress={() => handleDeleteTest(item.id)}
-              style={styles.deleteIconButton}
+              style={[styles.deleteIconButton, { backgroundColor: palette.surface }]}
             >
               <Ionicons name="trash-outline" size={18} color="#ef4444" />
             </TouchableOpacity>
@@ -129,16 +130,16 @@ const TestScoresScreen = ({ navigation }) => {
         </View>
 
         {item.subjects.length > 0 ? (
-          <View style={styles.overallRowContainer}>
-            <Text style={styles.overallTitle}>Overall Performance</Text>
+          <View style={[styles.overallRowContainer, { backgroundColor: palette.surface }]}>
+            <Text style={[styles.overallTitle, { color: palette.textPrimary }]}>Overall Performance</Text>
             <View style={styles.overallHeaderRow}>
-              <Text style={styles.overallHeaderText}>Total obtained</Text>
-              <Text style={styles.overallHeaderText}>Total marks</Text>
-              <Text style={styles.overallHeaderText}>Overall %</Text>
+              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Total obtained</Text>
+              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Total marks</Text>
+              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Overall %</Text>
             </View>
             <View style={styles.overallValuesRow}>
-              <Text style={styles.overallValueText}>{totalObtained}</Text>
-              <Text style={styles.overallValueText}>{totalMarks}</Text>
+              <Text style={[styles.overallValueText, { color: palette.textPrimary }]}>{totalObtained}</Text>
+              <Text style={[styles.overallValueText, { color: palette.textPrimary }]}>{totalMarks}</Text>
               <Text style={[styles.overallValueText, { color: overallColor }]}>
                 {overallPercentage}%
               </Text>
@@ -153,7 +154,7 @@ const TestScoresScreen = ({ navigation }) => {
               const pctColor = getGradeColor(pct);
               return (
                 <View key={index} style={styles.subjectRow}>
-                  <Text style={styles.subjectText}>
+                  <Text style={[styles.subjectText, { color: palette.textPrimary }]}>
                     {subject.name}: {subject.marksObtained}/{subject.totalMarks}
                   </Text>
                   <Text style={[styles.subjectPctText, { color: pctColor }]}>
@@ -163,7 +164,7 @@ const TestScoresScreen = ({ navigation }) => {
               );
             })
           ) : (
-            <Text style={styles.noSubjectsText}>No subjects added yet</Text>
+            <Text style={[styles.noSubjectsText, { color: palette.textSecondary }]}>No subjects added yet</Text>
           )}
         </View>
       </NeumorphicCard>
@@ -180,22 +181,24 @@ const TestScoresScreen = ({ navigation }) => {
       >
         <View style={styles.modalOverlay}>
           <NeumorphicCard style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Test</Text>
+            <Text style={[styles.modalTitle, { color: React.useContext(ThemeContext).palette.textPrimary }]}>Add New Test</Text>
             
             <View style={styles.selectorContainer}>
-              <Text style={styles.selectorLabel}>Test Type:</Text>
+              <Text style={[styles.selectorLabel, { color: React.useContext(ThemeContext).palette.textPrimary }]}>Test Type:</Text>
               <View style={styles.optionsContainer}>
                 {testOptions.map((option) => (
                   <TouchableOpacity
                     key={option}
                     style={[
                       styles.optionButton,
+                      { backgroundColor: React.useContext(ThemeContext).palette.surface, borderColor: '#4b5563' },
                       selectedTest === option && styles.selectedOption
                     ]}
                     onPress={() => setSelectedTest(option)}
                   >
                     <Text style={[
                       styles.optionText,
+                      { color: React.useContext(ThemeContext).palette.textPrimary },
                       selectedTest === option && styles.selectedOptionText
                     ]}>
                       {option}
@@ -206,19 +209,21 @@ const TestScoresScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.selectorContainer}>
-              <Text style={styles.selectorLabel}>Year:</Text>
+              <Text style={[styles.selectorLabel, { color: React.useContext(ThemeContext).palette.textPrimary }]}>Year:</Text>
               <View style={styles.optionsContainer}>
                 {yearOptions.map((option) => (
                   <TouchableOpacity
                     key={option}
                     style={[
                       styles.optionButton,
+                      { backgroundColor: React.useContext(ThemeContext).palette.surface, borderColor: '#4b5563' },
                       selectedYear === option && styles.selectedOption
                     ]}
                     onPress={() => setSelectedYear(option)}
                   >
                     <Text style={[
                       styles.optionText,
+                      { color: React.useContext(ThemeContext).palette.textPrimary },
                       selectedYear === option && styles.selectedOptionText
                     ]}>
                       {option}
@@ -229,19 +234,21 @@ const TestScoresScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.selectorContainer}>
-              <Text style={styles.selectorLabel}>Semester:</Text>
+              <Text style={[styles.selectorLabel, { color: React.useContext(ThemeContext).palette.textPrimary }]}>Semester:</Text>
               <View style={styles.optionsContainer}>
                 {semesterOptions.map((option) => (
                   <TouchableOpacity
                     key={option}
                     style={[
                       styles.optionButton,
+                      { backgroundColor: React.useContext(ThemeContext).palette.surface, borderColor: '#4b5563' },
                       selectedSemester === option && styles.selectedOption
                     ]}
                     onPress={() => setSelectedSemester(option)}
                   >
                     <Text style={[
                       styles.optionText,
+                      { color: React.useContext(ThemeContext).palette.textPrimary },
                       selectedSemester === option && styles.selectedOptionText
                     ]}>
                       {option}
@@ -275,15 +282,16 @@ const TestScoresScreen = ({ navigation }) => {
     );
   };
 
+  const palette = React.useContext(ThemeContext).palette;
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Test Scores</Text>
+    <View style={[styles.container, { backgroundColor: palette.background }]}> 
+      <View style={[styles.header, { backgroundColor: palette.background }]}>
+        <Text style={[styles.title, { color: palette.textPrimary }]}>Test Scores</Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: palette.surface }]}
           onPress={() => setShowAddModal(true)}
         >
-          <Ionicons name="add" size={24} color="#6366f1" />
+          <Ionicons name="add" size={24} color={palette.textPrimary} />
         </TouchableOpacity>
       </View>
 

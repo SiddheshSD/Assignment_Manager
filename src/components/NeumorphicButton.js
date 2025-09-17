@@ -1,17 +1,19 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ThemeContext } from '../utils/theme';
 
 const NeumorphicButton = ({ title, onPress, style, textStyle, disabled = false }) => {
+  const { palette, mode } = React.useContext(ThemeContext);
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.container, style]}>
+    <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.container, { backgroundColor: palette.surface }, style]}>
       <LinearGradient
-        colors={disabled ? ['#d7dbe5', '#c1c8d6'] : ['#eef1f7', '#d9dee8']}
+        colors={disabled ? (mode === 'light' ? ['#d7dbe5', '#c1c8d6'] : ['#1f2937', '#111827']) : (mode === 'light' ? ['#eef1f7', '#d9dee8'] : ['#1f2937', '#111827'])}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <Text style={[styles.text, textStyle, disabled && styles.disabledText]}>
+        <Text style={[styles.text, { color: palette.textPrimary }, textStyle, disabled && styles.disabledText]}>
           {title}
         </Text>
       </LinearGradient>
