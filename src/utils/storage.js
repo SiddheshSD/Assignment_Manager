@@ -5,6 +5,9 @@ const STORAGE_KEYS = {
   EXPERIMENTS: 'experiments',
   TEST_SCORES: 'test_scores',
   THEME: 'app_theme',
+  NOTIF_TIMES: 'notif_times',
+  NOTIF_SCHEDULES: 'notif_schedules',
+  NOTIF_ENABLED: 'notif_enabled',
 };
 
 export const saveData = async (key, data) => {
@@ -60,9 +63,34 @@ export const clearAllData = async () => {
       STORAGE_KEYS.EXPERIMENTS,
       STORAGE_KEYS.TEST_SCORES,
       STORAGE_KEYS.THEME,
+      STORAGE_KEYS.NOTIF_TIMES,
+      STORAGE_KEYS.NOTIF_SCHEDULES,
+      STORAGE_KEYS.NOTIF_ENABLED,
     ]);
   } catch (error) {
     console.error('Error clearing data:', error);
+  }
+};
+
+export const saveNotificationTimes = (times) => saveData(STORAGE_KEYS.NOTIF_TIMES, times);
+export const loadNotificationTimes = () => loadData(STORAGE_KEYS.NOTIF_TIMES);
+export const saveNotificationSchedules = (schedules) => saveData(STORAGE_KEYS.NOTIF_SCHEDULES, schedules);
+export const loadNotificationSchedules = () => loadData(STORAGE_KEYS.NOTIF_SCHEDULES);
+
+export const saveNotificationEnabled = async (enabled) => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEYS.NOTIF_ENABLED, JSON.stringify(!!enabled));
+  } catch (e) {
+    console.error('Error saving notif enabled:', e);
+  }
+};
+export const loadNotificationEnabled = async () => {
+  try {
+    const v = await AsyncStorage.getItem(STORAGE_KEYS.NOTIF_ENABLED);
+    return v ? JSON.parse(v) : true; // default enabled
+  } catch (e) {
+    console.error('Error loading notif enabled:', e);
+    return true;
   }
 };
 

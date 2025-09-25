@@ -7,6 +7,9 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeContext, lightPalette, darkPalette } from './src/utils/theme';
 import { loadTheme, saveTheme } from './src/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+import { ensureAndroidChannel, scheduleDailyNotification, scheduleWeeklyNotification, requestNotificationPermissions } from './src/utils/notifications';
+import { loadNotificationTimes, loadNotificationSchedules } from './src/utils/storage';
 
 // Import screens
 import AssignmentsScreen from './src/screens/AssignmentsScreen';
@@ -16,6 +19,15 @@ import AssignmentDetailScreen from './src/screens/AssignmentDetailScreen';
 import ExperimentDetailScreen from './src/screens/ExperimentDetailScreen';
 import TestScoreDetailScreen from './src/screens/TestScoreDetailScreen';
 import Header from './src/components/Header';
+
+// Show alerts while app is foregrounded
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -91,6 +103,34 @@ export default function App() {
     (async () => {
       const saved = await loadTheme();
       setMode(saved);
+    })();
+  }, []);
+
+  // Schedule saved notifications on app start
+  useEffect(() => {
+    (async () => {
+      await ensureAndroidChannel();
+      const granted = await requestNotificationPermissions();
+      if (!granted) return;
+
+      // clear existing schedules to avoid duplicates
+      try { await Notifications.cancelAllScheduledNotificationsAsync(); } catch {}
+
+      const times = await loadNotificationTimes(); // [{hour,minute}]
+      const days = await loadNotificationSchedules(); // [bool x7]
+      if (!Array.isArray(times) || times.length === 0) return;
+
+      const weekdays = Array.isArray(days) && days.length === 7
+        ? days.map((on, i) => (on ? i + 1 : null)).filter(Boolean)
+        : [1,2,3,4,5,6,7];
+
+      const body = 'Check written assignments/experiments to review.';
+      const tasks = [];
+      for (const t of times) {
+        if (weekdays.length === 7) tasks.push(scheduleDailyNotification(t, body));
+        else weekdays.forEach((wd) => tasks.push(scheduleWeeklyNotification(t, wd, body)));
+      }
+      await Promise.all(tasks);
     })();
   }, []);
 

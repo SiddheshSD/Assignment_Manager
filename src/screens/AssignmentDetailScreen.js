@@ -13,14 +13,19 @@ import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
 import { saveAssignments, loadAssignments } from '../utils/storage';
 import { ThemeContext } from '../utils/theme';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const AssignmentDetailScreen = ({ route, navigation }) => {
   const { assignment: initialAssignment } = route.params;
   const [assignment, setAssignment] = useState(initialAssignment);
   const [showEditForm, setShowEditForm] = useState(false);
   const [newTotal, setNewTotal] = useState('');
-  const [newCourseCode, setNewCourseCode] = useState(assignment.courseCode || '');
   const palette = React.useContext(ThemeContext).palette;
+
+  // Date-time picker state
+  const [pickerItemId, setPickerItemId] = useState(null);
+  const [pickerMode, setPickerMode] = useState(null); // 'date' | 'time' | null
+  const [tempDate, setTempDate] = useState(new Date());
 
   useEffect(() => {
     navigation.setOptions({
@@ -36,11 +41,6 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     await saveAssignments(updatedAssignments);
   };
 
-  const handleSave = async () => {
-    await saveData();
-    navigation.goBack();
-  };
-
   const handleStatusChange = (assignmentId, newStatus) => {
     const updatedAssignment = {
       ...assignment,
@@ -50,6 +50,53 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     };
     setAssignment(updatedAssignment);
     saveData();
+  };
+
+  const openPickerForItem = (item) => {
+    const current = item.submissionDate ? new Date(item.submissionDate) : new Date();
+    setTempDate(current);
+    setPickerItemId(item.id);
+    setPickerMode('date');
+  };
+
+  const onPickerChange = (_event, selectedDate) => {
+    if (!selectedDate) {
+      setPickerMode(null);
+      setPickerItemId(null);
+      return;
+    }
+
+    if (pickerMode === 'date') {
+      const d = new Date(selectedDate);
+      const t = tempDate;
+      d.setHours(t.getHours());
+      d.setMinutes(t.getMinutes());
+      d.setSeconds(0);
+      setTempDate(d);
+      setPickerMode('time');
+    } else if (pickerMode === 'time') {
+      const d = new Date(tempDate);
+      const t = new Date(selectedDate);
+      d.setHours(t.getHours());
+      d.setMinutes(t.getMinutes());
+      d.setSeconds(0);
+
+      const updatedAssignment = {
+        ...assignment,
+        assignments: assignment.assignments.map((i) =>
+          i.id === pickerItemId ? { ...i, submissionDate: d.toISOString(), submissionNotifIds: [] } : i
+        ),
+      };
+      setAssignment(updatedAssignment);
+      saveData();
+      setPickerMode(null);
+      setPickerItemId(null);
+    }
+  };
+
+  const handleSave = async () => {
+    await saveData();
+    navigation.goBack();
   };
 
   const handleEditTotal = () => {
@@ -68,7 +115,6 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     let updatedAssignments = [...assignment.assignments];
 
     if (total > currentTotal) {
-      // Add new assignments
       for (let i = currentTotal + 1; i <= total; i++) {
         updatedAssignments.push({
           id: i,
@@ -77,14 +123,12 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
         });
       }
     } else if (total < currentTotal) {
-      // Remove assignments
       updatedAssignments = updatedAssignments.slice(0, total);
     }
 
     const updatedAssignment = {
       ...assignment,
       totalAssignments: total,
-      courseCode: newCourseCode.trim(),
       assignments: updatedAssignments,
     };
 
@@ -226,6 +270,18 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <View style={{ marginTop: 10 }}>
+          <Text style={{ color: palette.textSecondary, marginBottom: 6, fontWeight: '600' }}>Submission Date</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.statusButton, { borderColor: '#6366f1', backgroundColor: palette.surface }]}
+              onPress={() => openPickerForItem(item)}
+            >
+              <Text style={{ color: '#6366f1', fontWeight: '600' }}>{item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </NeumorphicCard>
     );
   };
@@ -235,18 +291,12 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
 
     return (
       <NeumorphicCard style={styles.editForm}>
-        <Text style={[styles.formTitle, { color: palette.textPrimary }]}>Edit Total Assignments</Text>
+        <Text style={styles.formTitle}>Edit Total Assignments</Text>
         <NeumorphicInput
           placeholder="New total number"
           value={newTotal}
           onChangeText={setNewTotal}
           keyboardType="numeric"
-          style={styles.input}
-        />
-        <NeumorphicInput
-          placeholder="Course Code (optional)"
-          value={newCourseCode}
-          onChangeText={setNewCourseCode}
           style={styles.input}
         />
         <View style={styles.buttonRow}>
@@ -267,7 +317,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.deleteRow}>
-          <Text style={[styles.deleteLabel, { color: palette.textPrimary }]}>Delete subject</Text>
+          <Text style={styles.deleteLabel}>Delete subject</Text>
           <View style={styles.deleteButtonRow}>
             <View style={{ flex: 1 }} />
             <NeumorphicButton
@@ -311,6 +361,15 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
+
+      {pickerMode && (
+        <DateTimePicker
+          value={tempDate}
+          mode={pickerMode}
+          display="default"
+          onChange={onPickerChange}
+        />
+      )}
     </View>
   );
 };
@@ -428,11 +487,6 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
   },
   buttonRow: {
     flexDirection: 'row',
