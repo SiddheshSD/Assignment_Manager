@@ -20,6 +20,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
   const [assignment, setAssignment] = useState(initialAssignment);
   const [showEditForm, setShowEditForm] = useState(false);
   const [newTotal, setNewTotal] = useState('');
+  const [newCourseCode, setNewCourseCode] = useState(initialAssignment.courseCode || '');
   const palette = React.useContext(ThemeContext).palette;
 
   // Date-time picker state
@@ -46,6 +47,17 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
       ...assignment,
       assignments: assignment.assignments.map((item) =>
         item.id === assignmentId ? { ...item, status: newStatus } : item
+      ),
+    };
+    setAssignment(updatedAssignment);
+    saveData();
+  };
+
+  const clearSubmissionDate = (assignmentId) => {
+    const updatedAssignment = {
+      ...assignment,
+      assignments: assignment.assignments.map((item) =>
+        item.id === assignmentId ? { ...item, submissionDate: null, submissionNotifIds: [] } : item
       ),
     };
     setAssignment(updatedAssignment);
@@ -128,6 +140,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
 
     const updatedAssignment = {
       ...assignment,
+      courseCode: (newCourseCode || '').trim(),
       totalAssignments: total,
       assignments: updatedAssignments,
     };
@@ -275,10 +288,24 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
           <Text style={{ color: palette.textSecondary, marginBottom: 6, fontWeight: '600' }}>Submission Date</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TouchableOpacity
-              style={[styles.statusButton, { borderColor: '#6366f1', backgroundColor: palette.surface }]}
+              style={[
+                styles.statusButton,
+                { borderColor: '#6366f1', backgroundColor: palette.surface, flex: 17, minWidth: 0 }
+              ]}
               onPress={() => openPickerForItem(item)}
             >
-              <Text style={{ color: '#6366f1', fontWeight: '600' }}>{item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}</Text>
+              <Text style={{ color: '#6366f1', fontWeight: '600' }}>
+                {item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                { borderColor: '#ef4444', backgroundColor: palette.surface, flex: 3, minWidth: 0 }
+              ]}
+              onPress={() => clearSubmissionDate(item.id)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
             </TouchableOpacity>
           </View>
         </View>
@@ -291,12 +318,18 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
 
     return (
       <NeumorphicCard style={styles.editForm}>
-        <Text style={styles.formTitle}>Edit Total Assignments</Text>
+        <Text style={[styles.formTitle, { color: palette.textPrimary }]}>Edit Total Assignments</Text>
         <NeumorphicInput
           placeholder="New total number"
           value={newTotal}
           onChangeText={setNewTotal}
           keyboardType="numeric"
+          style={styles.input}
+        />
+        <NeumorphicInput
+          placeholder="Course Code (optional)"
+          value={newCourseCode}
+          onChangeText={setNewCourseCode}
           style={styles.input}
         />
         <View style={styles.buttonRow}>
@@ -317,7 +350,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.deleteRow}>
-          <Text style={styles.deleteLabel}>Delete subject</Text>
+          <Text style={[styles.deleteLabel, { color: '#ef4444' }]}>Delete Subject</Text>
           <View style={styles.deleteButtonRow}>
             <View style={{ flex: 1 }} />
             <NeumorphicButton
@@ -345,7 +378,11 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.editButton, { backgroundColor: palette.surface }]}
-            onPress={() => setShowEditForm(!showEditForm)}
+            onPress={() => {
+              setNewTotal(String(assignment.assignments.length));
+              setNewCourseCode(assignment.courseCode || '');
+              setShowEditForm(true);
+            }}
           >
             <Ionicons name="create-outline" size={20} color="#6366f1" />
           </TouchableOpacity>

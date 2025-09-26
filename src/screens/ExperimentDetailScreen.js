@@ -20,6 +20,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
   const [experiment, setExperiment] = useState(initialExperiment);
   const [showEditForm, setShowEditForm] = useState(false);
   const [newTotal, setNewTotal] = useState('');
+  const [newCourseCode, setNewCourseCode] = useState(initialExperiment.courseCode || '');
   const palette = React.useContext(ThemeContext).palette;
 
   const [pickerItemId, setPickerItemId] = useState(null);
@@ -53,6 +54,17 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
       ),
     };
     setExperiment(updatedExperiment);
+    saveData();
+  };
+
+  const clearSubmissionDate = (experimentId) => {
+    const updated = {
+      ...experiment,
+      experiments: experiment.experiments.map((item) =>
+        item.id === experimentId ? { ...item, submissionDate: null, submissionNotifIds: [] } : item
+      ),
+    };
+    setExperiment(updated);
     saveData();
   };
 
@@ -127,6 +139,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
 
     const updatedExperiment = {
       ...experiment,
+      courseCode: (newCourseCode || '').trim(),
       totalExperiments: total,
       experiments: updatedExperiments,
     };
@@ -274,10 +287,24 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
           <Text style={{ color: palette.textSecondary, marginBottom: 6, fontWeight: '600' }}>Submission Date</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <TouchableOpacity
-              style={[styles.statusButton, { borderColor: '#6366f1', backgroundColor: palette.surface }]}
+              style={[
+                styles.statusButton,
+                { borderColor: '#6366f1', backgroundColor: palette.surface, flex: 17, minWidth: 0 }
+              ]}
               onPress={() => openPickerForItem(item)}
             >
-              <Text style={{ color: '#6366f1', fontWeight: '600' }}>{item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}</Text>
+              <Text style={{ color: '#6366f1', fontWeight: '600' }}>
+                {item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                { borderColor: '#ef4444', backgroundColor: palette.surface, flex: 3, minWidth: 0 }
+              ]}
+              onPress={() => clearSubmissionDate(item.id)}
+            >
+              <Ionicons name="trash-outline" size={18} color="#ef4444" />
             </TouchableOpacity>
           </View>
         </View>
@@ -290,12 +317,18 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
 
     return (
       <NeumorphicCard style={styles.editForm}>
-        <Text style={styles.formTitle}>Edit Total Experiments</Text>
+        <Text style={[styles.formTitle, { color: palette.textPrimary }]}>Edit Total Experiments</Text>
         <NeumorphicInput
           placeholder="New total number"
           value={newTotal}
           onChangeText={setNewTotal}
           keyboardType="numeric"
+          style={styles.input}
+        />
+        <NeumorphicInput
+          placeholder="Course Code (optional)"
+          value={newCourseCode}
+          onChangeText={setNewCourseCode}
           style={styles.input}
         />
         <View style={styles.buttonRow}>
@@ -316,7 +349,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
         </View>
 
         <View style={styles.deleteRow}>
-          <Text style={styles.deleteLabel}>Delete subject</Text>
+          <Text style={[styles.deleteLabel, { color: '#ef4444' }]}>Delete Subject</Text>
           <View style={styles.deleteButtonRow}>
             <View style={{ flex: 1 }} />
             <NeumorphicButton
@@ -333,7 +366,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <View style={[styles.header, { backgroundColor: palette.background }]}>
+      <View style={[styles.header, { backgroundColor: palette.background }]}> 
         <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{experiment.subjectName}</Text>
         <View style={styles.rightControls}>
           <TouchableOpacity
@@ -344,7 +377,11 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.editButton, { backgroundColor: palette.surface }]}
-            onPress={() => setShowEditForm(!showEditForm)}
+            onPress={() => {
+              setNewTotal(String(experiment.experiments.length));
+              setNewCourseCode(experiment.courseCode || '');
+              setShowEditForm(true);
+            }}
           >
             <Ionicons name="create-outline" size={20} color="#6366f1" />
           </TouchableOpacity>
@@ -380,7 +417,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space_between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
