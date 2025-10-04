@@ -33,6 +33,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     });
   }, [experiment.subjectName]);
 
+
   const saveData = async () => {
     const allExperiments = await loadExperiments();
     const updatedExperiments = allExperiments.map((item) =>
@@ -41,12 +42,8 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     await saveExperiments(updatedExperiments);
   };
 
-  const handleSave = async () => {
-    await saveData();
-    navigation.goBack();
-  };
 
-  const handleStatusChange = (experimentId, newStatus) => {
+  const handleStatusChange = async (experimentId, newStatus) => {
     const updatedExperiment = {
       ...experiment,
       experiments: experiment.experiments.map((item) =>
@@ -54,10 +51,16 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
       ),
     };
     setExperiment(updatedExperiment);
-    saveData();
+    
+    // Auto-save the changes
+    const allExperiments = await loadExperiments();
+    const statusSavedExperiments = allExperiments.map((item) =>
+      item.id === updatedExperiment.id ? updatedExperiment : item
+    );
+    await saveExperiments(statusSavedExperiments);
   };
 
-  const clearSubmissionDate = (experimentId) => {
+  const clearSubmissionDate = async (experimentId) => {
     const updated = {
       ...experiment,
       experiments: experiment.experiments.map((item) =>
@@ -65,7 +68,13 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
       ),
     };
     setExperiment(updated);
-    saveData();
+    
+    // Auto-save the changes
+    const allExperiments = await loadExperiments();
+    const clearDateSavedExperiments = allExperiments.map((item) =>
+      item.id === updated.id ? updated : item
+    );
+    await saveExperiments(clearDateSavedExperiments);
   };
 
   const openPickerForItem = (item) => {
@@ -75,7 +84,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     setPickerMode('date');
   };
 
-  const onPickerChange = (_event, selectedDate) => {
+  const onPickerChange = async (_event, selectedDate) => {
     if (!selectedDate) {
       setPickerMode(null);
       setPickerItemId(null);
@@ -83,19 +92,9 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     }
 
     if (pickerMode === 'date') {
+      // Set time to start of day (only date, no time)
       const d = new Date(selectedDate);
-      const t = tempDate;
-      d.setHours(t.getHours());
-      d.setMinutes(t.getMinutes());
-      d.setSeconds(0);
-      setTempDate(d);
-      setPickerMode('time');
-    } else if (pickerMode === 'time') {
-      const d = new Date(tempDate);
-      const t = new Date(selectedDate);
-      d.setHours(t.getHours());
-      d.setMinutes(t.getMinutes());
-      d.setSeconds(0);
+      d.setHours(0, 0, 0, 0);
 
       const updated = {
         ...experiment,
@@ -104,13 +103,19 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
         ),
       };
       setExperiment(updated);
-      saveData();
       setPickerMode(null);
       setPickerItemId(null);
+      
+      // Auto-save the changes
+      const allExperiments = await loadExperiments();
+      const pickerSavedExperiments = allExperiments.map((item) =>
+        item.id === updated.id ? updated : item
+      );
+      await saveExperiments(pickerSavedExperiments);
     }
   };
 
-  const handleEditTotal = () => {
+  const handleEditTotal = async () => {
     if (!newTotal.trim()) {
       Alert.alert('Error', 'Please enter a number');
       return;
@@ -147,7 +152,13 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     setExperiment(updatedExperiment);
     setNewTotal('');
     setShowEditForm(false);
-    saveData();
+    
+    // Auto-save the changes
+    const allExperiments = await loadExperiments();
+    const editSavedExperiments = allExperiments.map((item) =>
+      item.id === updatedExperiment.id ? updatedExperiment : item
+    );
+    await saveExperiments(editSavedExperiments);
   };
 
   const handleDeleteSubject = () => {
@@ -200,112 +211,135 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     }
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'completed': return 'Completed';
+      case 'written': return 'Written';
+      case 'not_completed': return 'Not Completed';
+      case 'not_given': return 'Not Given';
+      default: return 'Unknown';
+    }
+  };
+
   const renderExperimentItem = ({ item }) => {
     const statusColor = getStatusColor(item.status);
     const statusIcon = getStatusIcon(item.status);
+    const statusText = getStatusText(item.status);
 
     return (
       <NeumorphicCard style={styles.experimentCard}>
+        {/* Header with experiment name and status */}
         <View style={styles.experimentHeader}>
-          <Text style={[styles.experimentName, { color: palette.textPrimary }]}>{item.name}</Text>
-          <View style={[styles.statusIndicator, { backgroundColor: statusColor }]}>
-            <Ionicons name={statusIcon} size={16} color="white" />
+          <View style={styles.experimentTitleContainer}>
+            <Text style={[styles.experimentName, { color: palette.textPrimary }]}>{item.name}</Text>
+            <View style={styles.statusContainer}>
+              <View style={[styles.statusIndicator, { backgroundColor: statusColor }]}>
+                <Ionicons name={statusIcon} size={14} color="white" />
+              </View>
+              <Text style={[styles.statusText, { color: statusColor }]}>{statusText}</Text>
+            </View>
           </View>
         </View>
         
-        <View style={styles.statusButtons}>
-          <TouchableOpacity
-            style={[
-              styles.statusButton,
-              item.status === 'completed' && styles.activeButton,
-              { borderColor: '#10b981', backgroundColor: palette.surface }
-            ]}
-            onPress={() => handleStatusChange(item.id, 'completed')}
-          >
-            <Text style={[
-              styles.statusButtonText,
-              item.status === 'completed' && styles.activeButtonText,
-              { color: '#10b981' }
-            ]}>
-              Completed
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.statusButton,
-              item.status === 'written' && styles.activeButton,
-              { borderColor: '#f59e0b', backgroundColor: palette.surface }
-            ]}
-            onPress={() => handleStatusChange(item.id, 'written')}
-          >
-            <Text style={[
-              styles.statusButtonText,
-              item.status === 'written' && styles.activeButtonText,
-              { color: '#f59e0b' }
-            ]}>
-              Written
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.statusButton,
-              item.status === 'not_completed' && styles.activeButton,
-              { borderColor: '#ef4444', backgroundColor: palette.surface }
-            ]}
-            onPress={() => handleStatusChange(item.id, 'not_completed')}
-          >
-            <Text style={[
-              styles.statusButtonText,
-              item.status === 'not_completed' && styles.activeButtonText,
-              { color: '#ef4444' }
-            ]}>
-              Not Completed
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.statusButton,
-              item.status === 'not_given' && styles.activeButton,
-              { borderColor: '#6b7280', backgroundColor: palette.surface }
-            ]}
-            onPress={() => handleStatusChange(item.id, 'not_given')}
-          >
-            <Text style={[
-              styles.statusButtonText,
-              item.status === 'not_given' && styles.activeButtonText,
-              { color: '#6b7280' }
-            ]}>
-              Not Given
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ marginTop: 10 }}>
-          <Text style={{ color: palette.textSecondary, marginBottom: 6, fontWeight: '600' }}>Submission Date</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {/* Status Selection */}
+        <View style={styles.statusSection}>
+          <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Status</Text>
+          <View style={styles.statusButtons}>
             <TouchableOpacity
               style={[
                 styles.statusButton,
-                { borderColor: '#6366f1', backgroundColor: palette.surface, flex: 17, minWidth: 0 }
+                item.status === 'completed' && styles.activeButton,
+                { borderColor: '#10b981' }
               ]}
-              onPress={() => openPickerForItem(item)}
+              onPress={() => handleStatusChange(item.id, 'completed')}
             >
-              <Text style={{ color: '#6366f1', fontWeight: '600' }}>
-                {item.submissionDate ? new Date(item.submissionDate).toLocaleString() : 'Set Date & Time'}
+              <Ionicons name="checkmark-circle" size={16} color={item.status === 'completed' ? '#10b981' : '#9ca3af'} />
+              <Text style={[
+                styles.statusButtonText,
+                item.status === 'completed' && styles.activeButtonText,
+                { color: item.status === 'completed' ? '#10b981' : '#6b7280' }
+              ]}>
+                Done
               </Text>
             </TouchableOpacity>
+            
             <TouchableOpacity
               style={[
                 styles.statusButton,
-                { borderColor: '#ef4444', backgroundColor: palette.surface, flex: 3, minWidth: 0 }
+                item.status === 'written' && styles.activeButton,
+                { borderColor: '#f59e0b' }
               ]}
-              onPress={() => clearSubmissionDate(item.id)}
+              onPress={() => handleStatusChange(item.id, 'written')}
             >
-              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+              <Ionicons name="create" size={16} color={item.status === 'written' ? '#f59e0b' : '#9ca3af'} />
+              <Text style={[
+                styles.statusButtonText,
+                item.status === 'written' && styles.activeButtonText,
+                { color: item.status === 'written' ? '#f59e0b' : '#6b7280' }
+              ]}>
+                Written
+              </Text>
             </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                item.status === 'not_completed' && styles.activeButton,
+                { borderColor: '#ef4444' }
+              ]}
+              onPress={() => handleStatusChange(item.id, 'not_completed')}
+            >
+              <Ionicons name="close-circle" size={16} color={item.status === 'not_completed' ? '#ef4444' : '#9ca3af'} />
+              <Text style={[
+                styles.statusButtonText,
+                item.status === 'not_completed' && styles.activeButtonText,
+                { color: item.status === 'not_completed' ? '#ef4444' : '#6b7280' }
+              ]}>
+                Pending
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                styles.statusButton,
+                item.status === 'not_given' && styles.activeButton,
+                { borderColor: '#6b7280' }
+              ]}
+              onPress={() => handleStatusChange(item.id, 'not_given')}
+            >
+              <Ionicons name="ellipse-outline" size={16} color={item.status === 'not_given' ? '#6b7280' : '#9ca3af'} />
+              <Text style={[
+                styles.statusButtonText,
+                item.status === 'not_given' && styles.activeButtonText,
+                { color: item.status === 'not_given' ? '#6b7280' : '#6b7280' }
+              ]}>
+                Not Given
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Submission Date Section */}
+        <View style={styles.dateSection}>
+          <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Submission Date</Text>
+          <View style={styles.dateContainer}>
+            <TouchableOpacity
+              style={[styles.dateButton, { backgroundColor: palette.surface }]}
+              onPress={() => openPickerForItem(item)}
+            >
+              <Ionicons name="calendar-outline" size={18} color="#6366f1" />
+              <Text style={[styles.dateText, { color: item.submissionDate ? '#6366f1' : '#9ca3af' }]}>
+                {item.submissionDate ? new Date(item.submissionDate).toLocaleDateString() : 'Set Date'}
+              </Text>
+            </TouchableOpacity>
+            {item.submissionDate && (
+              <TouchableOpacity
+                style={[styles.clearDateButton, { backgroundColor: palette.surface }]}
+                onPress={() => clearSubmissionDate(item.id)}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </NeumorphicCard>
@@ -368,24 +402,16 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={[styles.header, { backgroundColor: palette.background }]}> 
         <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{experiment.subjectName}</Text>
-        <View style={styles.rightControls}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: palette.surface }]}
-            onPress={handleSave}
-          >
-            <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.editButton, { backgroundColor: palette.surface }]}
-            onPress={() => {
-              setNewTotal(String(experiment.experiments.length));
-              setNewCourseCode(experiment.courseCode || '');
-              setShowEditForm(true);
-            }}
-          >
-            <Ionicons name="create-outline" size={20} color="#6366f1" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.editButton, { backgroundColor: palette.surface }]}
+          onPress={() => {
+            setNewTotal(String(experiment.experiments.length));
+            setNewCourseCode(experiment.courseCode || '');
+            setShowEditForm(true);
+          }}
+        >
+          <Ionicons name="create-outline" size={20} color="#6366f1" />
+        </TouchableOpacity>
       </View>
 
       {renderEditForm()}
@@ -401,7 +427,7 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
       {pickerMode && (
         <DateTimePicker
           value={tempDate}
-          mode={pickerMode}
+          mode="date"
           display="default"
           onChange={onPickerChange}
         />
@@ -441,74 +467,112 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  saveButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#f0f0f3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginRight: 10,
-  },
-  rightControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   listContainer: {
     paddingBottom: 20,
   },
   experimentCard: {
-    marginVertical: 6,
+    marginVertical: 8,
     marginHorizontal: 16,
+    padding: 20,
   },
   experimentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
+  },
+  experimentTitleContainer: {
+    flexDirection: 'column',
+    gap: 8,
   },
   experimentName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#111827',
+    letterSpacing: 0.5,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   statusIndicator: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  statusSection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statusButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   statusButton: {
     flex: 1,
-    minWidth: '45%',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 2,
+    minWidth: '22%',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'transparent',
+    gap: 4,
   },
   activeButton: {
-    backgroundColor: '#f0f0f3',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
   },
   statusButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   activeButtonText: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+  },
+  dateSection: {
+    marginTop: 4,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dateButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  dateText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  clearDateButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fee2e2',
   },
   editForm: {
     marginHorizontal: 16,

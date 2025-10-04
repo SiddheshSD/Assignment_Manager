@@ -28,6 +28,7 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     });
   }, [testScore.testType, testScore.year, testScore.semester]);
 
+
   const saveData = async () => {
     const allTestScores = await loadTestScores();
     const updatedTestScores = allTestScores.map((item) =>
@@ -36,12 +37,8 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     await saveTestScores(updatedTestScores);
   };
 
-  const handleSave = async () => {
-    await saveData();
-    navigation.goBack();
-  };
 
-  const handleAddSubject = () => {
+  const handleAddSubject = async () => {
     if (!subjectName.trim() || !marksObtained.trim() || !totalMarks.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -68,12 +65,18 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     };
 
     setTestScore(updatedTestScore);
-    saveData();
 
     setSubjectName('');
     setMarksObtained('');
     setTotalMarks('');
     setShowAddForm(false);
+    
+    // Auto-save the changes
+    const allTestScores = await loadTestScores();
+    const addSavedTestScores = allTestScores.map((item) =>
+      item.id === updatedTestScore.id ? updatedTestScore : item
+    );
+    await saveTestScores(addSavedTestScores);
   };
 
   const handleDeleteSubject = (subjectId) => {
@@ -85,13 +88,19 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
             const updatedTestScore = {
               ...testScore,
               subjects: testScore.subjects.filter((subject) => subject.id !== subjectId),
             };
             setTestScore(updatedTestScore);
-            saveData();
+            
+            // Auto-save the changes
+            const allTestScores = await loadTestScores();
+            const deleteSavedTestScores = allTestScores.map((item) =>
+              item.id === updatedTestScore.id ? updatedTestScore : item
+            );
+            await saveTestScores(deleteSavedTestScores);
           },
         },
       ]
@@ -117,31 +126,37 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
     return (
       <NeumorphicCard style={styles.subjectCard}>
         <View style={styles.subjectHeader}>
-          <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{item.name}</Text>
+          <View style={styles.subjectTitleContainer}>
+            <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{item.name}</Text>
+            <Text style={[styles.percentageText, { color: gradeColor }]}>{percentage}%</Text>
+          </View>
           <TouchableOpacity
             style={[styles.deleteButton, { backgroundColor: palette.surface }]}
             onPress={() => handleDeleteSubject(item.id)}
           >
-            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+            <Ionicons name="trash-outline" size={16} color="#ef4444" />
           </TouchableOpacity>
         </View>
         
-        <View style={styles.marksContainer}>
-          <View style={styles.marksRow}>
-            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Marks Obtained:</Text>
-            <Text style={[styles.marksValue, { color: gradeColor }]}>
-              {item.marksObtained}
-            </Text>
-          </View>
-          <View style={styles.marksRow}>
-            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Total Marks:</Text>
-            <Text style={[styles.marksValue, { color: palette.textPrimary }]}>{item.totalMarks}</Text>
-          </View>
-          <View style={styles.marksRow}>
-            <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Percentage:</Text>
-            <Text style={[styles.marksValue, { color: gradeColor, fontWeight: 'bold' }]}>
-              {percentage}%
-            </Text>
+        <View style={styles.marksSection}>
+          <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Score Details</Text>
+          <View style={styles.marksContainer}>
+            <View style={styles.marksCard}>
+              <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Obtained</Text>
+              <Text style={[styles.marksValue, { color: gradeColor }]}>
+                {item.marksObtained}
+              </Text>
+            </View>
+            <View style={styles.marksCard}>
+              <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Total</Text>
+              <Text style={[styles.marksValue, { color: palette.textPrimary }]}>{item.totalMarks}</Text>
+            </View>
+            <View style={styles.marksCard}>
+              <Text style={[styles.marksLabel, { color: palette.textSecondary }]}>Percentage</Text>
+              <Text style={[styles.marksValue, { color: gradeColor, fontWeight: 'bold' }]}>
+                {percentage}%
+              </Text>
+            </View>
           </View>
         </View>
       </NeumorphicCard>
@@ -222,20 +237,12 @@ const TestScoreDetailScreen = ({ route, navigation }) => {
         <Text style={[styles.testInfo, { color: palette.textPrimary }] }>
           {testScore.testType} - {testScore.year} SEM {testScore.semester}
         </Text>
-        <View style={styles.rightControls}>
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: palette.surface }]}
-            onPress={handleSave}
-          >
-            <Ionicons name="checkmark-done-outline" size={20} color="#10b981" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: palette.surface }]}
-            onPress={() => setShowAddForm(!showAddForm)}
-          >
-            <Ionicons name="add" size={20} color="#6366f1" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.addButton, { backgroundColor: palette.surface }]}
+          onPress={() => setShowAddForm(!showAddForm)}
+        >
+          <Ionicons name="add" size={20} color="#6366f1" />
+        </TouchableOpacity>
       </View>
 
       {renderAddForm()}
@@ -306,25 +313,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  saveButton: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#f0f0f3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    marginRight: 10,
-  },
-  rightControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   statsCard: {
     marginHorizontal: 16,
     marginBottom: 10,
@@ -357,49 +345,74 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   subjectCard: {
-    marginVertical: 6,
+    marginVertical: 8,
     marginHorizontal: 16,
+    padding: 20,
   },
   subjectHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  subjectTitleContainer: {
+    flex: 1,
+    gap: 10,
   },
   subjectName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#111827',
-    flex: 1,
+    letterSpacing: 0.5,
+  },
+  percentageText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   deleteButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  marksSection: {
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   marksContainer: {
-    gap: 8,
-  },
-  marksRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
+  },
+  marksCard: {
+    flex: 1,
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
   },
   marksLabel: {
-    fontSize: 14,
-    color: '#374151',
+    fontSize: 12,
+    color: '#6b7280',
     fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   marksValue: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#111827',
     fontWeight: '700',
   },

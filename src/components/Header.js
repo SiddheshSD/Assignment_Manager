@@ -145,7 +145,7 @@ const Header = ({ navigation, title, showBack }) => {
         <View style={[styles.logoCircle, { backgroundColor: palette.surface }]}> 
           <Ionicons name="school" size={20} color={palette.accent} />
         </View>
-        <Text style={[styles.appName, { color: palette.textPrimary }]}>ASS APP</Text>
+        <Text style={[styles.appName, { color: palette.textPrimary }]}>AssignHub</Text>
         <Text style={[styles.headerTitle, { color: palette.textSecondary }]}> · {title}</Text>
       </View>
 

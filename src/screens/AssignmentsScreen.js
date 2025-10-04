@@ -97,12 +97,18 @@ const AssignmentsScreen = ({ navigation }) => {
       .join(', ');
   };
 
+  const getProgressPercentage = (item) => {
+    const completed = getStatusCounts(item).completed;
+    return Math.round((completed / item.totalAssignments) * 100) || 0;
+  };
+
   const renderAssignmentCard = ({ item }) => {
     const counts = getStatusCounts(item);
     const completedNumbers = getStatusNumbers(item, 'completed');
     const writtenNumbers = getStatusNumbers(item, 'written');
     const notCompletedNumbers = getStatusNumbers(item, 'not_completed');
     const notGivenNumbers = getStatusNumbers(item, 'not_given');
+    const progressPercentage = getProgressPercentage(item);
 
     return (
       <NeumorphicCard
@@ -111,34 +117,61 @@ const AssignmentsScreen = ({ navigation }) => {
       >
         <View style={styles.cardHeader}>
           <View style={styles.headerTopRow}>
-            <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{item.subjectName}</Text>
-            {!!item.courseCode && (
-              <Text style={[styles.courseCode, { color: palette.textSecondary }]}>{item.courseCode}</Text>
-            )}
+            <View style={styles.titleContainer}>
+              <Text style={[styles.subjectName, { color: palette.textPrimary }]}>{item.subjectName}</Text>
+              {!!item.courseCode && (
+                <Text style={[styles.courseCode, { color: palette.textSecondary }]}>{item.courseCode}</Text>
+              )}
+            </View>
+            <View style={styles.progressContainer}>
+              <Text style={[styles.progressText, { color: progressPercentage >= 70 ? '#10b981' : progressPercentage >= 40 ? '#f59e0b' : '#ef4444' }]}>
+                {progressPercentage}%
+              </Text>
+              <View style={[styles.progressBar, { backgroundColor: palette.surface }]}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { 
+                      width: `${progressPercentage}%`,
+                      backgroundColor: progressPercentage >= 70 ? '#10b981' : progressPercentage >= 40 ? '#f59e0b' : '#ef4444'
+                    }
+                  ]} 
+                />
+              </View>
+            </View>
           </View>
-          <Text style={[styles.totalText, { color: palette.textSecondary }]}>Total assignments: {item.totalAssignments}</Text>
+          <Text style={[styles.totalText, { color: palette.textSecondary }]}>Total: {item.totalAssignments} assignments</Text>
         </View>
         
         <View style={styles.statusContainer}>
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.completed]}>
-              Completed: {completedNumbers || 'None'}
-            </Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.written]}>
-              Written: {writtenNumbers || 'None'}
-            </Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.notCompleted]}>
-              Not Completed: {notCompletedNumbers || 'None'}
-            </Text>
-          </View>
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.notGiven]}>
-              Not Given: {notGivenNumbers || 'None'}
-            </Text>
+          <View style={styles.statusGrid}>
+            <View style={styles.statusCard}>
+              <View style={[styles.statusIcon, { backgroundColor: '#10b981' }]}>
+                <Ionicons name="checkmark-circle" size={16} color="white" />
+              </View>
+              <Text style={[styles.statusCount, { color: '#10b981' }]}>{counts.completed}</Text>
+            </View>
+            
+            <View style={styles.statusCard}>
+              <View style={[styles.statusIcon, { backgroundColor: '#f59e0b' }]}>
+                <Ionicons name="create" size={16} color="white" />
+              </View>
+              <Text style={[styles.statusCount, { color: '#f59e0b' }]}>{counts.written}</Text>
+            </View>
+            
+            <View style={styles.statusCard}>
+              <View style={[styles.statusIcon, { backgroundColor: '#ef4444' }]}>
+                <Ionicons name="close-circle" size={16} color="white" />
+              </View>
+              <Text style={[styles.statusCount, { color: '#ef4444' }]}>{counts.not_completed}</Text>
+            </View>
+            
+            <View style={styles.statusCard}>
+              <View style={[styles.statusIcon, { backgroundColor: '#6b7280' }]}>
+                <Ionicons name="ellipse-outline" size={16} color="white" />
+              </View>
+              <Text style={[styles.statusCount, { color: '#6b7280' }]}>{counts.not_given}</Text>
+            </View>
           </View>
         </View>
       </NeumorphicCard>
@@ -256,51 +289,87 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     marginHorizontal: 16,
+    padding: 20,
   },
   cardHeader: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  courseCode: {
-    fontSize: 14,
-    fontWeight: '700',
+  titleContainer: {
+    flex: 1,
+    marginRight: 16,
   },
   subjectName: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#111827',
-    marginBottom: 5,
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  courseCode: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '600',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  progressContainer: {
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  progressText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  progressBar: {
+    width: 60,
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 3,
   },
   totalText: {
-    fontSize: 16,
-    color: '#374151',
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   statusContainer: {
-    gap: 8,
+    marginTop: 4,
   },
-  statusRow: {
+  statusGrid: {
     flexDirection: 'row',
+    gap: 12,
   },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
+  statusCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    gap: 4,
   },
-  completed: {
-    color: '#10b981',
+  statusIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  written: {
-    color: '#f59e0b',
-  },
-  notCompleted: {
-    color: '#ef4444',
-  },
-  notGiven: {
-    color: '#6b7280',
+  statusCount: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   addForm: {
     marginHorizontal: 16,

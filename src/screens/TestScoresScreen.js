@@ -95,7 +95,6 @@ const TestScoresScreen = ({ navigation }) => {
     const newTestScores = [...testScores, newTestScore];
     saveData(newTestScores);
 
-    setSelectedTest('');
     setSelectedYear('');
     setSelectedSemester('');
     setShowAddModal(false);
@@ -119,30 +118,36 @@ const TestScoresScreen = ({ navigation }) => {
               {item.year} SEM {item.semester}
             </Text>
           </View>
-          {item.subjects.length === 0 && (
-            <TouchableOpacity
-              onPress={() => handleDeleteTest(item.id)}
-              style={[styles.deleteIconButton, { backgroundColor: palette.surface }]}
-            >
-              <Ionicons name="trash-outline" size={18} color="#ef4444" />
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerRightColumn}>
+            {item.subjects.length > 0 ? (
+              <Text style={[styles.percentageText, { color: overallColor }]}>{overallPercentage}%</Text>
+            ) : (
+              <TouchableOpacity
+                onPress={() => handleDeleteTest(item.id)}
+                style={[styles.deleteIconButton, { backgroundColor: palette.surface }]}
+              >
+                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {item.subjects.length > 0 ? (
-          <View style={[styles.overallRowContainer, { backgroundColor: palette.surface }]}>
-            <Text style={[styles.overallTitle, { color: palette.textPrimary }]}>Overall Performance</Text>
-            <View style={styles.overallHeaderRow}>
-              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Total obtained</Text>
-              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Total marks</Text>
-              <Text style={[styles.overallHeaderText, { color: palette.textSecondary }]}>Overall %</Text>
-            </View>
-            <View style={styles.overallValuesRow}>
-              <Text style={[styles.overallValueText, { color: palette.textPrimary }]}>{totalObtained}</Text>
-              <Text style={[styles.overallValueText, { color: palette.textPrimary }]}>{totalMarks}</Text>
-              <Text style={[styles.overallValueText, { color: overallColor }]}>
-                {overallPercentage}%
-              </Text>
+          <View style={styles.statsSection}>
+            <Text style={[styles.sectionTitle, { color: palette.textSecondary }]}>Performance Summary</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Obtained</Text>
+                <Text style={[styles.statValue, { color: overallColor }]}>{totalObtained}</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Total</Text>
+                <Text style={[styles.statValue, { color: palette.textPrimary }]}>{totalMarks}</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={[styles.statLabel, { color: palette.textSecondary }]}>Subjects</Text>
+                <Text style={[styles.statValue, { color: palette.textPrimary }]}>{item.subjects.length}</Text>
+              </View>
             </View>
           </View>
         ) : null}
@@ -345,44 +350,87 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     marginHorizontal: 16,
+    padding: 20,
   },
   cardHeader: {
-    marginBottom: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   headerLeftColumn: {
-    flexDirection: 'column',
+    flex: 1,
   },
-  headerRightGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  deleteIconButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+  headerRightColumn: {
+    alignItems: 'flex-end',
   },
   testType: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#111827',
-    marginBottom: 5,
+    marginBottom: 6,
+    letterSpacing: 0.5,
   },
   yearSemester: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '600',
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  percentageText: {
     fontSize: 16,
-    color: '#374151',
+    fontWeight: '700',
+  },
+  deleteIconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fee2e2',
+  },
+  statsSection: {
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.1)',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: 16,
+    color: '#111827',
+    fontWeight: '700',
   },
   subjectsContainer: {
     gap: 8,
