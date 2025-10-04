@@ -4,8 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemeContext } from '../utils/theme';
 import { Ionicons } from '@expo/vector-icons';
 import NeumorphicCard from './NeumorphicCard';
-import { clearAllData, loadNotificationTimes, saveNotificationTimes, loadNotificationSchedules, saveNotificationSchedules, loadNotificationEnabled, saveNotificationEnabled } from '../utils/storage';
-import { requestNotificationPermissions, ensureAndroidChannel, scheduleDailyNotification, scheduleWeeklyNotification } from '../utils/notifications';
+import { clearAllData, loadNotificationTimes, saveNotificationTimes, loadNotificationSchedules, saveNotificationSchedules, loadNotificationEnabled, saveNotificationEnabled, loadAssignments, loadExperiments } from '../utils/storage';
+import { requestNotificationPermissions, ensureAndroidChannel, scheduleDailyNotification, scheduleWeeklyNotification, scheduleWrittenItemsNotification, scheduleSubmissionReminders, checkAndNotifyWrittenItems } from '../utils/notifications';
 import * as Notifications from 'expo-notifications';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -16,6 +16,7 @@ const Header = ({ navigation, title, showBack }) => {
   const [notifTimes, setNotifTimes] = useState([]);
   const [notifDays, setNotifDays] = useState([true, true, true, true, true, false, false]);
   const [notifEnabled, setNotifEnabled] = useState(true);
+  const [writtenItemsCount, setWrittenItemsCount] = useState(0);
 
   const [timePickerIndex, setTimePickerIndex] = useState(null);
   const [timePickerDate, setTimePickerDate] = useState(new Date());
@@ -46,6 +47,12 @@ const Header = ({ navigation, title, showBack }) => {
       if (Array.isArray(savedDays) && savedDays.length === 7) setNotifDays(savedDays);
       const enabled = await loadNotificationEnabled();
       setNotifEnabled(enabled);
+      
+      // Check written items count
+      const assignments = await loadAssignments();
+      const experiments = await loadExperiments();
+      const { count } = await checkAndNotifyWrittenItems(assignments, experiments);
+      setWrittenItemsCount(count);
     })();
   }, []);
 
@@ -118,14 +125,13 @@ const Header = ({ navigation, title, showBack }) => {
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     if (notifEnabled) {
-      const weekdays = notifDays.map((on, i) => (on ? i + 1 : null)).filter(Boolean);
-      const body = 'Check written assignments/experiments to review.';
-      const tasks = [];
-      for (const t of notifTimes || []) {
-        if (weekdays.length === 7) tasks.push(scheduleDailyNotification(t, body));
-        else weekdays.forEach((wd) => tasks.push(scheduleWeeklyNotification(t, wd, body)));
-      }
-      await Promise.all(tasks);
+      // Schedule written items notifications
+      await scheduleWrittenItemsNotification(notifTimes, notifDays);
+      
+      // Schedule submission reminders
+      const assignments = await loadAssignments();
+      const experiments = await loadExperiments();
+      await scheduleSubmissionReminders(assignments, experiments);
     }
 
     setNotifVisible(false);
@@ -172,58 +178,98 @@ const Header = ({ navigation, title, showBack }) => {
             <Text style={[styles.menuText, { color: '#ef4444' }]}>Clear All App Data</Text>
           </TouchableOpacity>
           <View style={styles.menuDivider} />
-          <View style={styles.copyrightRow}>
-            <Text style={[styles.copyright, { color: palette.textSecondary }]}>© SiddheshSD</Text>
-          </View>
+          <TouchableOpacity style={styles.githubRow} onPress={() => {
+            // You can add GitHub link functionality here if needed
+            // Linking.openURL('https://github.com/SiddheshSD');
+          }}>
+            <Ionicons name="logo-github" size={18} color={palette.textSecondary} />
+            <Text style={[styles.githubText, { color: palette.textSecondary }]}>SiddheshSD</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
 
       <Modal visible={notifVisible} transparent animationType="fade" onRequestClose={() => setNotifVisible(false)}>
         <View style={styles.centerOverlay}>
           <View style={[styles.largeModal, { backgroundColor: palette.surface }]}> 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 }}>
-              <Text style={[styles.menuText, { color: palette.textPrimary }]}>Daily Reminder Times</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <TouchableOpacity onPress={toggleNotifications} style={[styles.iconButton, { backgroundColor: palette.background, marginRight: 0 }]}>
-                  <Ionicons name={notifEnabled ? 'notifications' : 'notifications-off-outline'} size={18} color={palette.textPrimary} />
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleContainer}>
+                <Ionicons name="notifications" size={24} color={palette.accent} />
+                <Text style={[styles.modalTitle, { color: palette.textPrimary }]}>Notification Settings</Text>
+              </View>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity onPress={toggleNotifications} style={[styles.toggleButton, { backgroundColor: notifEnabled ? palette.accent : palette.background }]}>
+                  <Ionicons name={notifEnabled ? 'notifications' : 'notifications-off-outline'} size={18} color={notifEnabled ? 'white' : palette.textPrimary} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={toggleNotifications} style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999, backgroundColor: palette.background }}>
-                  <Text style={{ color: palette.textPrimary }}>{notifEnabled ? 'On' : 'Off'}</Text>
-                </TouchableOpacity>
+                <Text style={[styles.toggleText, { color: palette.textPrimary }]}>{notifEnabled ? 'Enabled' : 'Disabled'}</Text>
               </View>
             </View>
 
-            {(notifTimes || []).map((t, idx) => (
-              <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 12 }}>
-                <TouchableOpacity onPress={() => openTimePicker(idx)} style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 10, backgroundColor: palette.background }}>
-                  <Text style={{ color: palette.textPrimary }}>{`${formatHour(t.hour)}:${String(t.minute).padStart(2,'0')}${is24Hour ? '' : ' ' + formatAmPm(t.hour)}`}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setNotifTimes(notifTimes.filter((_, i) => i !== idx))} style={[styles.iconButton, { backgroundColor: palette.background, marginRight: 0 }]}>
-                  <Ionicons name="trash-outline" size={18} color={palette.textPrimary} />
-                </TouchableOpacity>
+            {/* Status Card */}
+            <View style={[styles.statusCard, { backgroundColor: palette.background }]}>
+              <View style={styles.statusRow}>
+                <Ionicons name="create" size={20} color="#f59e0b" />
+                <Text style={[styles.statusText, { color: palette.textPrimary }]}>Written Items: {writtenItemsCount}</Text>
               </View>
-            ))}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingTop: 4 }}>
-              <TouchableOpacity onPress={addNotifTime} style={[styles.iconButton, { backgroundColor: palette.background, marginRight: 0 }]}>
-                <Ionicons name="add" size={18} color={palette.textPrimary} />
+              <Text style={[styles.statusSubtext, { color: palette.textSecondary }]}>Items ready for review</Text>
+            </View>
+
+            {/* Reminder Times Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>Daily Reminder Times</Text>
+              <Text style={[styles.sectionSubtitle, { color: palette.textSecondary }]}>When to notify about written items</Text>
+            </View>
+
+            <View style={styles.timesContainer}>
+              {(notifTimes || []).map((t, idx) => (
+                <View key={idx} style={[styles.timeItem, { backgroundColor: palette.background }]}>
+                  <TouchableOpacity onPress={() => openTimePicker(idx)} style={styles.timeButton}>
+                    <Ionicons name="time-outline" size={18} color={palette.accent} />
+                    <Text style={[styles.timeText, { color: palette.textPrimary }]}>
+                      {`${formatHour(t.hour)}:${String(t.minute).padStart(2,'0')}${is24Hour ? '' : ' ' + formatAmPm(t.hour)}`}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setNotifTimes(notifTimes.filter((_, i) => i !== idx))} style={[styles.deleteTimeButton, { backgroundColor: '#fee2e2' }]}>
+                    <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity onPress={addNotifTime} style={[styles.addTimeButton, { backgroundColor: palette.accent }]}>
+                <Ionicons name="add" size={18} color="white" />
+                <Text style={styles.addTimeText}>Add Time</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.menuText, { color: palette.textPrimary, paddingHorizontal: 12, paddingVertical: 8 }]}>Days of Week</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 12, paddingBottom: 8 }}>
+            {/* Days of Week Section */}
+            <View style={styles.sectionContainer}>
+              <Text style={[styles.sectionTitle, { color: palette.textPrimary }]}>Active Days</Text>
+              <Text style={[styles.sectionSubtitle, { color: palette.textSecondary }]}>Select days to receive notifications</Text>
+            </View>
+            
+            <View style={styles.daysContainer}>
               {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => (
-                <TouchableOpacity key={d} onPress={() => setNotifDays(notifDays.map((v, idx) => (idx===i ? !v : v)))} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: notifDays[i] ? palette.accent : palette.background }}>
-                  <Text style={{ color: notifDays[i] ? 'white' : palette.textPrimary }}>{d}</Text>
+                <TouchableOpacity 
+                  key={d} 
+                  onPress={() => setNotifDays(notifDays.map((v, idx) => (idx===i ? !v : v)))} 
+                  style={[styles.dayButton, { 
+                    backgroundColor: notifDays[i] ? palette.accent : palette.background,
+                    borderColor: notifDays[i] ? palette.accent : '#e5e7eb'
+                  }]}
+                >
+                  <Text style={[styles.dayText, { color: notifDays[i] ? 'white' : palette.textPrimary }]}>{d}</Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', padding: 12, gap: 10 }}>
-              <TouchableOpacity onPress={() => setNotifVisible(false)} style={[styles.iconButton, { backgroundColor: palette.background, marginRight: 0 }]}>
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity onPress={() => setNotifVisible(false)} style={[styles.cancelButton, { backgroundColor: palette.background }]}>
                 <Ionicons name="close" size={18} color={palette.textPrimary} />
+                <Text style={[styles.buttonText, { color: palette.textPrimary }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={saveNotif} style={[styles.iconButton, { backgroundColor: palette.background, marginRight: 0 }]}>
-                <Ionicons name="checkmark" size={18} color={palette.textPrimary} />
+              <TouchableOpacity onPress={saveNotif} style={[styles.saveButton, { backgroundColor: palette.accent }]}>
+                <Ionicons name="checkmark" size={18} color="white" />
+                <Text style={[styles.buttonText, { color: 'white' }]}>Save Settings</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -336,13 +382,186 @@ const styles = StyleSheet.create({
     color: '#111827',
     fontWeight: '600',
   },
-  copyrightRow: {
+  githubRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 6,
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    gap: 8,
   },
-  copyright: {
-    fontSize: 12,
+  githubText: {
+    fontSize: 14,
     color: '#6b7280',
+    fontWeight: '600',
+  },
+  // Enhanced notification modal styles
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
+  modalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  toggleButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statusCard: {
+    marginHorizontal: 20,
+    marginVertical: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusSubtext: {
+    fontSize: 13,
+    marginLeft: 30,
+  },
+  sectionContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+  },
+  timesContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    gap: 8,
+  },
+  timeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  timeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  timeText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  deleteTimeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  addTimeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  addTimeText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  daysContainer: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  dayButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    minWidth: 0,
+  },
+  dayText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  cancelButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  saveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  buttonText: {
+    fontSize: 15,
     fontWeight: '600',
   },
 });

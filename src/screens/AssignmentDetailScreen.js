@@ -11,7 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
-import { saveAssignments, loadAssignments } from '../utils/storage';
+import { saveAssignments, loadAssignments, loadExperiments, loadNotificationTimes, loadNotificationSchedules, loadNotificationEnabled } from '../utils/storage';
+import { scheduleWrittenItemsNotification, scheduleSubmissionReminders } from '../utils/notifications';
 import { ThemeContext } from '../utils/theme';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -28,19 +29,23 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
   const [pickerMode, setPickerMode] = useState(null); // 'date' | null
   const [tempDate, setTempDate] = useState(new Date());
 
-  useEffect(() => {
-    navigation.setOptions({
-      title: assignment.subjectName,
-    });
-  }, [assignment.subjectName]);
-
-
   const saveData = async () => {
     const allAssignments = await loadAssignments();
-    const updatedAssignments = allAssignments.map((item) =>
-      item.id === assignment.id ? assignment : item
+    const updatedAssignments = allAssignments.map(a => 
+      a.id === assignment.id ? assignment : a
     );
     await saveAssignments(updatedAssignments);
+    
+    // Reschedule notifications after data changes
+    const enabled = await loadNotificationEnabled();
+    if (enabled) {
+      const times = await loadNotificationTimes();
+      const days = await loadNotificationSchedules();
+      const experiments = await loadExperiments();
+      
+      await scheduleWrittenItemsNotification(times, days);
+      await scheduleSubmissionReminders(updatedAssignments, experiments);
+    }
   };
 
   const handleStatusChange = async (assignmentId, newStatus) => {
@@ -51,13 +56,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
       ),
     };
     setAssignment(updatedAssignment);
-    
-    // Auto-save the changes
-    const allAssignments = await loadAssignments();
-    const statusSavedAssignments = allAssignments.map((item) =>
-      item.id === updatedAssignment.id ? updatedAssignment : item
-    );
-    await saveAssignments(statusSavedAssignments);
+    await saveData();
   };
 
   const clearSubmissionDate = async (assignmentId) => {
@@ -68,13 +67,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
       ),
     };
     setAssignment(updatedAssignment);
-    
-    // Auto-save the changes
-    const allAssignments = await loadAssignments();
-    const clearDateSavedAssignments = allAssignments.map((item) =>
-      item.id === updatedAssignment.id ? updatedAssignment : item
-    );
-    await saveAssignments(clearDateSavedAssignments);
+    await saveData();
   };
 
   const openPickerForItem = (item) => {
@@ -105,13 +98,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
       setAssignment(updatedAssignment);
       setPickerMode(null);
       setPickerItemId(null);
-      
-      // Auto-save the changes
-      const allAssignments = await loadAssignments();
-      const pickerSavedAssignments = allAssignments.map((item) =>
-        item.id === updatedAssignment.id ? updatedAssignment : item
-      );
-      await saveAssignments(pickerSavedAssignments);
+      await saveData();
     }
   };
 
@@ -153,13 +140,7 @@ const AssignmentDetailScreen = ({ route, navigation }) => {
     setAssignment(updatedAssignment);
     setNewTotal('');
     setShowEditForm(false);
-    
-    // Auto-save the changes
-    const allAssignments = await loadAssignments();
-    const editSavedAssignments = allAssignments.map((item) =>
-      item.id === updatedAssignment.id ? updatedAssignment : item
-    );
-    await saveAssignments(editSavedAssignments);
+    await saveData();
   };
 
   const handleDeleteSubject = () => {

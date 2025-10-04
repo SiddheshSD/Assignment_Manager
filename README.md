@@ -1,55 +1,68 @@
-# ASS APP - Assignment, Experience, and Test Score Management
+# AssignHub - Smart Assignment & Academic Management
 
-A beautiful mobile app built with React Native and Expo for managing assignments, experiments, and test scores with a professional Neumorphism UI design.
+A comprehensive mobile app built with React Native and Expo for managing assignments, experiments, and test scores with a modern, professional UI design and intelligent notification system.
 
-## Features
+## ✨ Key Features
 
-### 📝 Assignments Management
-- Add subjects with custom number of assignments
-- Track assignment status: Completed, Written, Not Completed, Not Given
-- Edit total number of assignments after creation
-- Beautiful card-based interface with status indicators
+### 📝 Smart Assignments Management
+- **Progress Visualization**: Visual progress bars showing completion percentage
+- **Status Tracking**: Completed, Written, Not Completed, Not Given with color-coded icons
+- **Submission Dates**: Set and track assignment submission deadlines
+- **Course Integration**: Add course codes and organize by subjects
+- **Bulk Management**: Edit total assignments and auto-generate items
 
-### 🧪 Experiments Management
-- Similar functionality to assignments
-- Track experiment completion status
-- Easy-to-use status management interface
+### 🧪 Advanced Experiments Management
+- **Identical Functionality**: Same powerful features as assignments
+- **Lab Tracking**: Perfect for laboratory experiments and reports
+- **Status Management**: Visual status indicators with icon-only display
+- **Progress Monitoring**: Track completion rates across all experiments
 
-### 📊 Test Scores Management
-- Create tests with UT1, UT2, or Finals options
-- Select year (FE, SE, TE, BE) and semester (1-8)
-- Add subjects with marks obtained and total marks
-- Automatic percentage calculation and grade color coding
-- Overall performance statistics
+### 📊 Comprehensive Test Scores Management
+- **Flexible Test Types**: UT1, UT2, Finals with year/semester selection
+- **Grade Visualization**: Percentage-based scoring with color-coded performance
+- **Performance Analytics**: Overall statistics and subject-wise breakdown
+- **Smart Calculations**: Automatic percentage and performance tracking
 
-### 🎨 UI/UX Features
-- Professional Neumorphism design
-- Smooth animations and transitions
-- Intuitive navigation with tab-based interface
-- Local data storage (no server required)
-- Cross-platform compatibility (Android & iOS)
+### 🔔 Intelligent Notification System
+- **Written Item Reminders**: Daily notifications for items ready for review
+- **Submission Alerts**: 2-day, 1-day, and same-day deadline reminders
+- **Customizable Schedule**: Set multiple reminder times and active days
+- **Smart Filtering**: Only notifies for relevant items with future deadlines
+- **Professional Settings**: Beautiful notification management interface
 
-## Technology Stack
+### 🎨 Modern UI/UX Design
+- **Clean Interface**: Modern card-based design with consistent spacing
+- **Visual Hierarchy**: Clear section headers and organized layouts
+- **Icon Integration**: Meaningful icons for quick status recognition
+- **Progress Indicators**: Visual progress bars and percentage displays
+- **Responsive Design**: Optimized for different screen sizes
+- **Dark/Light Themes**: Theme switching capability
+
+## 🛠️ Technology Stack
 
 - **React Native** with Expo SDK 54
-- **React Navigation** for navigation
+- **React Navigation** for seamless navigation
 - **AsyncStorage** for local data persistence
-- **Expo Linear Gradient** for Neumorphism effects
-- **Expo Vector Icons** for icons
+- **Expo Notifications** for intelligent reminder system
+- **Expo Vector Icons** (Ionicons) for consistent iconography
+- **React Native DateTimePicker** for date/time selection
+- **Custom Neumorphic Components** for modern UI design
 
-## Installation & Setup
+## 📱 Installation & Setup
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- npm or yarn
+- npm or yarn package manager
 - Expo CLI (`npm install -g @expo/cli`)
 - Expo Go app on your mobile device (for testing)
+- Android Studio (for Android development) or Xcode (for iOS development)
 
-### Installation Steps
+### Quick Start
 
-1. **Clone or download the project**
+1. **Clone the repository**
    ```bash
-   cd ass_app
+   git clone https://github.com/SiddheshSD/Assignment_Manager.git
+   cd Assignment_Manager
    ```
 
 2. **Install dependencies**
@@ -60,6 +73,8 @@ A beautiful mobile app built with React Native and Expo for managing assignments
 3. **Start the development server**
    ```bash
    npm start
+   # or
+   expo start
    ```
 
 4. **Run on device**
@@ -72,113 +87,160 @@ A beautiful mobile app built with React Native and Expo for managing assignments
 #### Android APK
 ```bash
 expo build:android
+# or for EAS Build
+eas build --platform android
 ```
 
 #### iOS App
 ```bash
 expo build:ios
+# or for EAS Build
+eas build --platform ios
 ```
 
-## App Structure
+## 📁 Project Structure
 
 ```
-src/
-├── components/
-│   ├── NeumorphicCard.js      # Reusable card component
-│   ├── NeumorphicButton.js    # Reusable button component
-│   └── NeumorphicInput.js     # Reusable input component
-├── screens/
-│   ├── AssignmentsScreen.js   # Main assignments list
-│   ├── AssignmentDetailScreen.js # Assignment management
-│   ├── ExperimentsScreen.js   # Main experiments list
-│   ├── ExperimentDetailScreen.js # Experiment management
-│   ├── TestScoresScreen.js    # Main test scores list
-│   └── TestScoreDetailScreen.js # Test score management
-└── utils/
-    └── storage.js             # Local storage utilities
+AssignHub/
+├── src/
+│   ├── components/
+│   │   ├── Header.js              # Enhanced header with notifications
+│   │   ├── NeumorphicCard.js      # Modern card component
+│   │   ├── NeumorphicButton.js    # Styled button component
+│   │   └── NeumorphicInput.js     # Input component
+│   ├── screens/
+│   │   ├── AssignmentsScreen.js   # Assignments list with progress
+│   │   ├── AssignmentDetailScreen.js # Assignment management
+│   │   ├── ExperimentsScreen.js   # Experiments list with progress
+│   │   ├── ExperimentDetailScreen.js # Experiment management
+│   │   ├── TestScoresScreen.js    # Test scores with analytics
+│   │   └── TestScoreDetailScreen.js # Score management
+│   └── utils/
+│       ├── storage.js             # Data persistence utilities
+│       ├── notifications.js       # Notification system
+│       └── theme.js               # Theme management
+├── assets/                        # App icons and images
+├── app.json                       # Expo configuration
+└── package.json                   # Dependencies
 ```
 
-## Usage Guide
+## 📖 Usage Guide
 
-### Adding Assignments/Experiments
-1. Tap the "+" button in the respective tab
-2. Enter subject name and number of assignments/experiments
-3. Tap "Add Subject" to create the card
-4. Tap on the card to manage individual items
+### 🚀 Getting Started
+1. **Launch AssignHub** and explore the three main tabs
+2. **Set up notifications** via the header menu (three dots)
+3. **Add your first subject** using the "+" button
+4. **Start tracking** your academic progress!
 
-### Managing Assignment/Experiment Status
-1. Open a subject card
-2. For each item, tap the appropriate status button:
-   - **Completed**: Assignment/experiment is fully done
-   - **Written**: Assignment/experiment is written but not checked
-   - **Not Completed**: Assignment/experiment is incomplete
-   - **Not Given**: Assignment/experiment not yet given
+### 📝 Managing Assignments & Experiments
+1. **Add Subject**: Tap "+" → Enter subject name, total count, and course code
+2. **Track Progress**: Visual progress bars show completion percentage
+3. **Update Status**: Tap items to change status (icons only for clean look)
+4. **Set Deadlines**: Add submission dates for automatic reminders
+5. **Monitor Performance**: View completion statistics at a glance
 
-### Adding Test Scores
-1. Go to Test Scores tab
-2. Tap "+" to add a new test
-3. Select test type (UT1, UT2, Finals)
-4. Select year (FE, SE, TE, BE)
-5. Select semester (1-8)
-6. Tap "Add Test" to create the test card
-7. Tap on the card to add subjects and marks
+### 📊 Test Score Management
+1. **Create Test**: Select type (UT1/UT2/Finals), year, and semester
+2. **Add Subjects**: Enter marks obtained and total marks
+3. **View Performance**: Automatic percentage calculation with color coding
+4. **Track Progress**: Overall statistics and subject-wise breakdown
 
-### Managing Test Scores
-1. Open a test card
-2. Tap "+" to add subjects
-3. Enter subject name, marks obtained, and total marks
-4. View automatic percentage calculation and grade colors
-5. See overall performance statistics
+### 🔔 Notification System
+1. **Access Settings**: Tap three dots → Notification Settings
+2. **Set Reminder Times**: Add multiple daily reminder times
+3. **Choose Active Days**: Select which days to receive notifications
+4. **Get Smart Alerts**: 
+   - Daily reminders for written items
+   - 2-day advance deadline warnings
+   - 1-day advance deadline alerts
+   - Same-day submission reminders
 
-## Data Storage
+## 💾 Data Storage & Privacy
 
-All data is stored locally on the device using AsyncStorage. No internet connection or server is required. Data persists between app sessions.
+- **Local Storage**: All data stored locally using AsyncStorage
+- **No Server Required**: Works completely offline
+- **Privacy First**: No data collection or external transmission
+- **Persistent**: Data survives app updates and device restarts
+- **Secure**: Data remains on your device only
 
-## Customization
+## 🎨 Design System
 
-### Colors
-The app uses a consistent color scheme:
-- Primary: #6366f1 (Indigo)
-- Success: #10b981 (Green)
-- Warning: #f59e0b (Amber)
-- Error: #ef4444 (Red)
-- Background: #e6e6e6 (Light Gray)
+### Color Palette
+- **Primary**: #6366f1 (Indigo) - Main accent color
+- **Success**: #10b981 (Green) - Completed items
+- **Warning**: #f59e0b (Amber) - Written/pending items  
+- **Error**: #ef4444 (Red) - Not completed items
+- **Neutral**: #6b7280 (Gray) - Not given items
+- **Background**: #e6e6e6 (Light Gray) - App background
 
-### Neumorphism Effects
-The app uses custom Neumorphism components with:
-- Soft shadows and highlights
-- Gradient backgrounds
-- Rounded corners
-- Subtle depth effects
+### Modern UI Elements
+- **Cards**: Elevated design with consistent 12px border radius
+- **Progress Bars**: Visual completion indicators
+- **Status Icons**: Meaningful iconography for quick recognition
+- **Typography**: Clear hierarchy with proper font weights
+- **Spacing**: Consistent 20px padding and 8px margins
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
 1. **App won't start**
-   - Ensure all dependencies are installed: `npm install`
-   - Clear cache: `expo start -c`
+   ```bash
+   # Clear cache and reinstall
+   expo start -c
+   rm -rf node_modules && npm install
+   ```
 
-2. **Build errors**
-   - Update Expo CLI: `npm install -g @expo/cli@latest`
-   - Check Node.js version (should be 16+)
+2. **Notifications not working**
+   - Grant notification permissions in device settings
+   - Check if Do Not Disturb mode is enabled
+   - Verify notification times are set correctly
 
-3. **Data not saving**
-   - Ensure device has sufficient storage
-   - Check if AsyncStorage permissions are granted
+3. **Build errors**
+   ```bash
+   # Update tools
+   npm install -g @expo/cli@latest
+   npm install -g eas-cli@latest
+   ```
 
-## Contributing
+4. **Data not saving**
+   - Ensure sufficient device storage
+   - Check AsyncStorage permissions
+   - Try clearing app data and restarting
 
-Feel free to contribute to this project by:
-- Reporting bugs
-- Suggesting new features
-- Submitting pull requests
-- Improving documentation
+## 🤝 Contributing
 
-## License
+We welcome contributions! Here's how you can help:
 
-This project is open source and available under the MIT License.
+- **🐛 Report Bugs**: Create detailed issue reports
+- **💡 Suggest Features**: Share your ideas for improvements
+- **🔧 Submit PRs**: Fix bugs or add new features
+- **📚 Improve Docs**: Help make documentation better
+- **⭐ Star the Repo**: Show your support!
 
-## Support
+### Development Setup
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes and test thoroughly
+4. Submit a pull request with a clear description
 
-For support or questions, please create an issue in the project repository.
+## 📄 License
+
+This project is open source and available under the **MIT License**.
+
+## 🆘 Support
+
+- **GitHub Issues**: [Create an issue](https://github.com/SiddheshSD/Assignment_Manager/issues)
+- **Discussions**: Join project discussions on GitHub
+- **Email**: Contact the developer for urgent matters
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ by **SiddheshSD**
+- Powered by **React Native** and **Expo**
+- Icons by **Expo Vector Icons**
+- UI inspired by modern design principles
+
+---
+
+**AssignHub** - Making academic management simple, smart, and beautiful! 🎓✨

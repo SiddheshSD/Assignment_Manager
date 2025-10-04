@@ -13,7 +13,8 @@ import NeumorphicCard from '../components/NeumorphicCard';
 import { ThemeContext } from '../utils/theme';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
-import { saveAssignments, loadAssignments } from '../utils/storage';
+import { saveAssignments, loadAssignments, loadExperiments, loadNotificationTimes, loadNotificationSchedules, loadNotificationEnabled } from '../utils/storage';
+import { scheduleWrittenItemsNotification, scheduleSubmissionReminders } from '../utils/notifications';
 
 const AssignmentsScreen = ({ navigation }) => {
   const [assignments, setAssignments] = useState([]);
@@ -31,7 +32,6 @@ const AssignmentsScreen = ({ navigation }) => {
       loadData();
     }, [])
   );
-
   const loadData = async () => {
     const data = await loadAssignments();
     setAssignments(data);
@@ -40,6 +40,17 @@ const AssignmentsScreen = ({ navigation }) => {
   const saveData = async (newAssignments) => {
     await saveAssignments(newAssignments);
     setAssignments(newAssignments);
+    
+    // Reschedule notifications after data changes
+    const enabled = await loadNotificationEnabled();
+    if (enabled) {
+      const times = await loadNotificationTimes();
+      const days = await loadNotificationSchedules();
+      const experiments = await loadExperiments();
+      
+      await scheduleWrittenItemsNotification(times, days);
+      await scheduleSubmissionReminders(newAssignments, experiments);
+    }
   };
 
   const handleAddSubject = () => {
@@ -91,10 +102,10 @@ const AssignmentsScreen = ({ navigation }) => {
   };
 
   const getStatusNumbers = (assignment, status) => {
-    return assignment.assignments
+    const items = assignment.assignments
       .filter((item) => item.status === status)
-      .map((item) => item.id)
-      .join(', ');
+      .map((item) => item.id);
+    return items.length > 0 ? items.join(', ') : 'None';
   };
 
   const getProgressPercentage = (item) => {
@@ -144,33 +155,37 @@ const AssignmentsScreen = ({ navigation }) => {
         </View>
         
         <View style={styles.statusContainer}>
-          <View style={styles.statusGrid}>
-            <View style={styles.statusCard}>
+          <View style={styles.statusSection}>
+            <View style={styles.statusRow}>
               <View style={[styles.statusIcon, { backgroundColor: '#10b981' }]}>
-                <Ionicons name="checkmark-circle" size={16} color="white" />
+                <Ionicons name="checkmark-circle" size={14} color="white" />
               </View>
-              <Text style={[styles.statusCount, { color: '#10b981' }]}>{counts.completed}</Text>
+              <Text style={[styles.statusLabel, { color: '#10b981' }]}>Done:</Text>
+              <Text style={[styles.statusNumbers, { color: palette.textPrimary }]}>{completedNumbers}</Text>
             </View>
             
-            <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
               <View style={[styles.statusIcon, { backgroundColor: '#f59e0b' }]}>
-                <Ionicons name="create" size={16} color="white" />
+                <Ionicons name="create" size={14} color="white" />
               </View>
-              <Text style={[styles.statusCount, { color: '#f59e0b' }]}>{counts.written}</Text>
+              <Text style={[styles.statusLabel, { color: '#f59e0b' }]}>Written:</Text>
+              <Text style={[styles.statusNumbers, { color: palette.textPrimary }]}>{writtenNumbers}</Text>
             </View>
             
-            <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
               <View style={[styles.statusIcon, { backgroundColor: '#ef4444' }]}>
-                <Ionicons name="close-circle" size={16} color="white" />
+                <Ionicons name="close-circle" size={14} color="white" />
               </View>
-              <Text style={[styles.statusCount, { color: '#ef4444' }]}>{counts.not_completed}</Text>
+              <Text style={[styles.statusLabel, { color: '#ef4444' }]}>Pending:</Text>
+              <Text style={[styles.statusNumbers, { color: palette.textPrimary }]}>{notCompletedNumbers}</Text>
             </View>
             
-            <View style={styles.statusCard}>
+            <View style={styles.statusRow}>
               <View style={[styles.statusIcon, { backgroundColor: '#6b7280' }]}>
-                <Ionicons name="ellipse-outline" size={16} color="white" />
+                <Ionicons name="ellipse-outline" size={14} color="white" />
               </View>
-              <Text style={[styles.statusCount, { color: '#6b7280' }]}>{counts.not_given}</Text>
+              <Text style={[styles.statusLabel, { color: '#6b7280' }]}>Not Given:</Text>
+              <Text style={[styles.statusNumbers, { color: palette.textPrimary }]}>{notGivenNumbers}</Text>
             </View>
           </View>
         </View>
@@ -347,29 +362,33 @@ const styles = StyleSheet.create({
   statusContainer: {
     marginTop: 4,
   },
-  statusGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statusCard: {
-    flex: 1,
-    alignItems: 'center',
+  statusSection: {
     backgroundColor: 'rgba(99, 102, 241, 0.05)',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
     borderRadius: 12,
-    gap: 4,
+    padding: 12,
+    gap: 8,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   statusIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statusCount: {
-    fontSize: 16,
-    fontWeight: '700',
+  statusLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    minWidth: 50,
+  },
+  statusNumbers: {
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
   },
   addForm: {
     marginHorizontal: 16,

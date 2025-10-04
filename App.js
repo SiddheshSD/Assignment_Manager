@@ -8,8 +8,8 @@ import { ThemeContext, lightPalette, darkPalette } from './src/utils/theme';
 import { loadTheme, saveTheme } from './src/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import { ensureAndroidChannel, scheduleDailyNotification, scheduleWeeklyNotification, requestNotificationPermissions } from './src/utils/notifications';
-import { loadNotificationTimes, loadNotificationSchedules } from './src/utils/storage';
+import { ensureAndroidChannel, scheduleWrittenItemsNotification, scheduleSubmissionReminders, requestNotificationPermissions } from './src/utils/notifications';
+import { loadNotificationTimes, loadNotificationSchedules, loadNotificationEnabled, loadAssignments, loadExperiments } from './src/utils/storage';
 
 // Import screens
 import AssignmentsScreen from './src/screens/AssignmentsScreen';
@@ -118,19 +118,17 @@ export default function App() {
 
       const times = await loadNotificationTimes(); // [{hour,minute}]
       const days = await loadNotificationSchedules(); // [bool x7]
-      if (!Array.isArray(times) || times.length === 0) return;
+      const enabled = await loadNotificationEnabled();
+      
+      if (!enabled || !Array.isArray(times) || times.length === 0) return;
 
-      const weekdays = Array.isArray(days) && days.length === 7
-        ? days.map((on, i) => (on ? i + 1 : null)).filter(Boolean)
-        : [1,2,3,4,5,6,7];
-
-      const body = 'Check written assignments/experiments to review.';
-      const tasks = [];
-      for (const t of times) {
-        if (weekdays.length === 7) tasks.push(scheduleDailyNotification(t, body));
-        else weekdays.forEach((wd) => tasks.push(scheduleWeeklyNotification(t, wd, body)));
-      }
-      await Promise.all(tasks);
+      // Schedule written items notifications
+      await scheduleWrittenItemsNotification(times, days);
+      
+      // Schedule submission reminders
+      const assignments = await loadAssignments();
+      const experiments = await loadExperiments();
+      await scheduleSubmissionReminders(assignments, experiments);
     })();
   }, []);
 

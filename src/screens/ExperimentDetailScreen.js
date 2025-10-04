@@ -11,7 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import NeumorphicCard from '../components/NeumorphicCard';
 import NeumorphicButton from '../components/NeumorphicButton';
 import NeumorphicInput from '../components/NeumorphicInput';
-import { saveExperiments, loadExperiments } from '../utils/storage';
+import { saveExperiments, loadExperiments, loadAssignments, loadNotificationTimes, loadNotificationSchedules, loadNotificationEnabled } from '../utils/storage';
+import { scheduleWrittenItemsNotification, scheduleSubmissionReminders } from '../utils/notifications';
 import { ThemeContext } from '../utils/theme';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -40,6 +41,17 @@ const ExperimentDetailScreen = ({ route, navigation }) => {
       item.id === experiment.id ? experiment : item
     );
     await saveExperiments(updatedExperiments);
+    
+    // Reschedule notifications after data changes
+    const enabled = await loadNotificationEnabled();
+    if (enabled) {
+      const times = await loadNotificationTimes();
+      const days = await loadNotificationSchedules();
+      const assignments = await loadAssignments();
+      
+      await scheduleWrittenItemsNotification(times, days);
+      await scheduleSubmissionReminders(assignments, updatedExperiments);
+    }
   };
 
 
