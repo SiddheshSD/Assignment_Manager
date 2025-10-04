@@ -1,4 +1,4 @@
-# Build Instructions for ASS APP (SDK 54)
+# Build Instructions for AssignHub (SDK 54)
 
 ## Quick Start
 
